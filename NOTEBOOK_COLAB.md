@@ -25,6 +25,7 @@ Todo o codigo real deve ficar neste repositorio.
 - O STT deve usar `language="pt"` sempre que possivel.
 - O TTS deve usar `language="pt"` com XTTS-v2.
 - O LLM deve ser API externa no MVP.
+- As escolhas de canal, membros escutados e modelo devem vir da configuracao do painel.
 
 ## Ordem geral das celulas
 
@@ -174,6 +175,12 @@ LLM_MODEL
 BOT_LANGUAGE
 STT_LANGUAGE
 TTS_LANGUAGE
+guild_id
+voice_channel_id
+listen_member_ids
+tts_model
+llm_model
+speaker_wav
 ```
 
 ## Celula 6 - Montar Google Drive opcional
@@ -573,6 +580,15 @@ runtime = run(
     discord_token=os.environ["DISCORD_TOKEN"],
 )
 ```
+
+Antes de chamar `run()`, o notebook deve garantir que a configuracao do painel foi carregada e aplicada:
+
+- `guild_id`
+- `voice_channel_id`
+- `listen_member_ids`
+- `tts_model`
+- `llm_model`
+- `speaker_wav`
 
 Se `run()` bloquear, tudo bem. O bot principal pode ficar rodando na ultima celula.
 

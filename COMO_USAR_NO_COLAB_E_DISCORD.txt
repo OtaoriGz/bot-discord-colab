@@ -1,0 +1,344 @@
+GUIA PARA RODAR O BOT NO COLAB E COLOCAR NO SERVIDOR
+=====================================================
+
+Este guia explica como colocar o bot no seu servidor Discord e como executar o projeto pelo Google Colab.
+
+O notebook principal criado para isso fica em:
+
+notebooks/bot_discord_colab_runner.ipynb
+
+
+1. O QUE VOCE PRECISA
+---------------------
+
+Voce precisa de:
+
+- Uma conta Discord.
+- Permissao para adicionar bots no servidor.
+- Um bot criado no Discord Developer Portal.
+- O token do bot.
+- O repositorio publicado no GitHub.
+- Google Colab.
+
+Por enquanto, para a fase atual, o ngrok ainda nao e necessario porque o painel web ainda nao foi implementado.
+
+
+2. CRIAR O BOT NO DISCORD DEVELOPER PORTAL
+------------------------------------------
+
+1. Acesse:
+
+   https://discord.com/developers/applications
+
+2. Clique em "New Application".
+
+3. Escolha um nome para a aplicacao.
+
+4. Entre na aplicacao criada.
+
+5. Va em "Bot".
+
+6. Clique para criar/adicionar o bot, se ele ainda nao existir.
+
+7. Copie o token do bot.
+
+   Esse token sera usado no Colab como DISCORD_TOKEN.
+
+Importante:
+
+- Nao coloque esse token no GitHub.
+- Nao mande esse token para outras pessoas.
+- Se vazar, clique em "Reset Token" no Developer Portal.
+
+
+3. CONFIGURAR O BOT NO DEVELOPER PORTAL
+---------------------------------------
+
+Na aba "Bot":
+
+1. Deixe o bot ativo.
+
+2. Nao precisa ativar "Message Content Intent" agora.
+
+3. Para a fase atual, o bot usa slash commands e voz.
+
+4. Guarde o token para usar no notebook.
+
+
+4. CONVIDAR O BOT PARA O SEU SERVIDOR
+-------------------------------------
+
+No Discord Developer Portal:
+
+1. Va em "OAuth2".
+
+2. Va em "URL Generator".
+
+3. Em "Scopes", marque:
+
+   - bot
+   - applications.commands
+
+4. Em "Bot Permissions", marque pelo menos:
+
+   - View Channels
+   - Send Messages
+   - Connect
+   - Speak
+   - Use Voice Activity
+
+5. Copie a URL gerada.
+
+6. Abra a URL no navegador.
+
+7. Escolha seu servidor.
+
+8. Autorize o bot.
+
+Se preferir montar a URL manualmente, voce precisa do Client ID da aplicacao:
+
+https://discord.com/oauth2/authorize?client_id=SEU_CLIENT_ID&scope=bot%20applications.commands&permissions=36703232
+
+Troque SEU_CLIENT_ID pelo Application ID/Client ID do seu bot.
+
+
+5. PREPARAR O REPOSITORIO NO GITHUB
+-----------------------------------
+
+Antes de abrir o notebook, envie este repositorio para o GitHub.
+
+O notebook vai clonar o repositorio usando a URL:
+
+https://github.com/SEU_USUARIO/bot-discord-colab.git
+
+Se o repositorio for privado, voce precisa usar uma forma de acesso autenticada no Colab.
+
+Para repositorio publico, basta a URL normal.
+
+
+6. ABRIR O NOTEBOOK NO COLAB
+----------------------------
+
+Opcoes:
+
+1. Abrir pelo GitHub no Colab.
+
+   Depois de subir o repo, acesse o arquivo:
+
+   notebooks/bot_discord_colab_runner.ipynb
+
+   E abra com Google Colab.
+
+2. Fazer upload manual.
+
+   No Colab:
+
+   - File
+   - Upload notebook
+   - escolha notebooks/bot_discord_colab_runner.ipynb
+
+
+7. CONFIGURAR O NOTEBOOK
+------------------------
+
+Na primeira celula do notebook, troque:
+
+REPO_URL = "https://github.com/SEU_USUARIO/bot-discord-colab.git"
+
+por:
+
+REPO_URL = "https://github.com/SEU_USUARIO_REAL/NOME_DO_REPO.git"
+
+Se sua branch principal nao for "main", troque:
+
+BRANCH = "main"
+
+para:
+
+BRANCH = "master"
+
+ou o nome correto da sua branch.
+
+
+8. RODAR O NOTEBOOK
+-------------------
+
+Rode as celulas em ordem:
+
+1. Configurar repositorio.
+2. Verificar runtime.
+3. Instalar dependencias de sistema.
+4. Clonar ou atualizar o repo.
+5. Instalar dependencias Python.
+6. Configurar variaveis secretas.
+7. Configurar canal e arquivos opcionais.
+8. Adicionar src ao Python path e validar import.
+9. Rodar modo sem Discord.
+10. Criar audio de teste.
+11. Iniciar bot Discord.
+
+Na celula de variaveis secretas, cole o token quando o Colab pedir:
+
+Discord bot token:
+
+O token nao aparece na tela e nao vai para o GitHub.
+
+
+9. TESTAR NO DISCORD
+--------------------
+
+Depois que a celula "Iniciar bot Discord" mostrar que o bot esta online, va para o Discord.
+
+Entre em uma call no servidor e use os comandos:
+
+/status
+
+Mostra se o bot esta online e o canal de voz ativo.
+
+/join
+
+Faz o bot entrar na call em que voce esta.
+
+/play_test_audio path:/content/test_audio.wav
+
+Faz o bot tocar um audio simples na call.
+
+/record_test seconds:5
+
+Faz o bot gravar alguns segundos da call.
+
+/leave
+
+Faz o bot sair da call.
+
+
+10. ONDE FICAM AS GRAVACOES
+---------------------------
+
+Depois de usar:
+
+/record_test seconds:5
+
+rode no notebook a celula:
+
+Ver arquivos gravados
+
+Os arquivos ficam em:
+
+/content/discord_recordings
+
+O nome do arquivo deve ser baseado no ID do usuario.
+
+
+11. COMO TESTAR NOVAS FASES SO ATUALIZANDO O GITHUB
+----------------------------------------------------
+
+Quando eu implementar novas fases no projeto:
+
+1. Voce envia as mudancas para o GitHub.
+
+2. No notebook, rode de novo a celula:
+
+   Clonar ou atualizar o repo
+
+3. Rode de novo:
+
+   Instalar dependencias Python
+
+4. Rode:
+
+   Adicionar src ao Python path e validar import
+
+5. Rode:
+
+   Iniciar bot Discord
+
+Assim o notebook continua sendo o mesmo launcher, e o codigo novo vem do GitHub.
+
+
+12. PROBLEMAS COMUNS
+--------------------
+
+Erro: DISCORD_TOKEN nao configurado
+
+Solucao:
+
+- Rode a celula de variaveis secretas.
+- Cole o token do bot.
+
+
+Erro: comandos slash nao aparecem
+
+Solucao:
+
+- Confirme que o bot foi convidado com applications.commands.
+- Espere alguns segundos.
+- Reabra o Discord ou troque de canal.
+
+
+Erro: bot nao entra na call
+
+Solucao:
+
+- Entre em uma call antes de usar /join.
+- Confirme que o bot tem permissao Connect.
+- Confirme que o bot consegue ver o canal.
+
+
+Erro: bot entra mas nao toca audio
+
+Solucao:
+
+- Confirme que ffmpeg foi instalado no Colab.
+- Confirme que o bot tem permissao Speak.
+- Rode a celula que cria /content/test_audio.wav.
+- Use /play_test_audio path:/content/test_audio.wav.
+
+
+Erro: gravacao nao salva audio
+
+Solucao:
+
+- Confirme que o bot esta na call.
+- Use /record_test seconds:5.
+- Fale durante a gravacao.
+- Verifique /content/discord_recordings.
+
+
+13. SEGURANCA
+-------------
+
+Nunca coloque no GitHub:
+
+- DISCORD_TOKEN
+- GEMINI_API_KEY
+- NGROK_AUTHTOKEN
+
+O correto e colocar esses valores pelo notebook, usando getpass.
+
+Se um token vazar:
+
+1. Va no Developer Portal.
+2. Clique em Reset Token.
+3. Atualize o token no Colab.
+
+
+14. STATUS DA FASE ATUAL
+------------------------
+
+Neste momento, o notebook testa a Fase 2:
+
+- Bot Discord.
+- Slash commands.
+- Entrar na call.
+- Sair da call.
+- Tocar audio fixo.
+- Gravar audio curto da call.
+
+As proximas fases vao adicionar:
+
+- STT em PT-BR.
+- TTS com clonagem de voz.
+- LLM.
+- Painel web via ngrok.
+- Memoria.

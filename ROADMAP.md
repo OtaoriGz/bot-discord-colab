@@ -50,7 +50,7 @@ Objetivo: preparar estrutura minima do projeto.
 
 Tarefas:
 
-1. Criar estrutura de pastas:
+1. [x] Criar estrutura de pastas:
    - `src/`
    - `src/bot_discord_colab/`
    - `config/`
@@ -61,7 +61,7 @@ Tarefas:
 
    Dificuldade: Facil.
 
-2. Criar arquivos base:
+2. [x] Criar arquivos base:
    - `requirements.txt`
    - `.env.example`
    - `config/bot_profile.yaml`
@@ -71,13 +71,13 @@ Tarefas:
 
    Dificuldade: Facil.
 
-3. Definir entrada principal do pacote:
+3. [x] Definir entrada principal do pacote:
    - `src/bot_discord_colab/main.py`
    - funcao `run()` para ser chamada pelo notebook.
 
    Dificuldade: Facil.
 
-4. Atualizar README com modo de execucao pelo Colab.
+4. [x] Atualizar README com modo de execucao pelo Colab.
 
    Dificuldade: Facil.
 
@@ -93,7 +93,7 @@ Objetivo: criar base configuravel para persona, audio, painel e runtime.
 
 Tarefas:
 
-1. Criar modelo de configuracao do bot:
+1. [x] Criar modelo de configuracao do bot:
    - nome
    - descricao
    - personalidade
@@ -102,17 +102,20 @@ Tarefas:
    - volume
    - tempo de silencio antes de falar
    - caminho do audio de referencia para voz
+   - selecao do modelo de TTS e do modelo de IA
+   - selecao da call/canal de voz do servidor
+   - filtro de quem o bot vai escutar
 
    Dificuldade: Facil.
 
-2. Criar loader de YAML:
+2. [x] Criar loader de YAML:
    - carregar `config/bot_profile.yaml`
    - carregar `config/settings.yaml`
    - permitir override por variaveis de ambiente.
 
    Dificuldade: Media.
 
-3. Criar estado central:
+3. [x] Criar estado central:
    - `human_speaking`
    - `bot_thinking`
    - `bot_speaking`
@@ -126,7 +129,7 @@ Tarefas:
 
    Dificuldade: Media.
 
-4. Criar fila de eventos:
+4. [x] Criar fila de eventos:
    - eventos do Discord
    - eventos de transcricao
    - eventos de painel
@@ -140,37 +143,37 @@ Pronto quando:
 - O estado central pode ser lido pelo painel e pelos modulos.
 - O idioma padrao fica fixado em PT-BR.
 
-## Fase 2 - Prova tecnica do Discord voice
+## Fase 2 - Discord voice
 
-Objetivo: validar a parte mais arriscada cedo.
+Objetivo: implementar a parte de voz do Discord.
 
 Tarefas:
 
-1. Criar bot com `py-cord`.
+1. [x] Criar bot com `py-cord`.
 
    Dificuldade: Media.
 
-2. Criar comandos slash:
+2. [x] Criar comandos slash:
    - `/join`: bot entra na call do usuario.
    - `/leave`: bot sai da call.
    - `/status`: mostra status basico.
 
    Dificuldade: Media.
 
-3. Testar reproducao de audio fixo na call:
+3. [x] Implementar reproducao de audio fixo na call:
    - usar arquivo `.wav` simples.
-   - confirmar que os membros ouvem.
+   - confirmar a saida de audio no canal.
 
    Dificuldade: Dificil.
 
-4. Testar captura de audio da call:
+4. [x] Implementar captura de audio da call:
    - usar `start_recording`.
-   - testar `WaveSink` ou sink customizado.
+   - usar `WaveSink` ou sink customizado.
    - verificar se o audio vem separado por usuario.
 
    Dificuldade: Critica.
 
-5. Criar log tecnico:
+5. [x] Criar log tecnico:
    - usuario detectado
    - inicio/fim de fala
    - tamanho do chunk
@@ -195,7 +198,7 @@ Objetivo: transformar audio da call em texto em portugues do Brasil.
 
 Tarefas:
 
-1. Instalar e testar `faster-whisper` no Colab.
+1. Instalar e configurar `faster-whisper` no Colab.
 
    Dificuldade: Media.
 
@@ -215,7 +218,7 @@ Tarefas:
 
    Dificuldade: Dificil.
 
-4. Testar modelos:
+4. Ajustar modelos:
    - `base` para modo leve.
    - `small` como padrao.
    - `medium` se a qualidade em PT-BR estiver ruim.
@@ -243,7 +246,7 @@ Objetivo: fazer o bot falar na call com voz clonada.
 
 Tarefas:
 
-1. Instalar e testar `Coqui TTS` com XTTS-v2 no Colab.
+1. Instalar e configurar `Coqui TTS` com XTTS-v2 no Colab.
 
    Dificuldade: Dificil.
 
@@ -270,7 +273,7 @@ Tarefas:
 
    Dificuldade: Media.
 
-6. Avaliar streaming de TTS:
+6. Evoluir para streaming de TTS:
    - MVP pode gerar WAV completo.
    - Depois implementar streaming/chunks para reduzir latencia.
    - Inspiracao: Neuro usa abordagem com RealtimeTTS.
@@ -337,7 +340,7 @@ Pronto quando:
 
 - O bot responde em PT-BR.
 - Respostas sao curtas e adequadas para TTS.
-- O prompt final pode ser visualizado para debug.
+- O prompt final pode ser visualizado.
 
 ## Fase 6 - Pipeline completo da call
 
@@ -458,6 +461,7 @@ Tarefas:
    - volume.
    - importacao de audio para clonagem.
    - gravacao direta da voz no painel.
+   - escolha do modelo de clonagem/voz, se houver mais de um.
 
    Dificuldade: Dificil.
 
@@ -551,13 +555,6 @@ Tarefas:
    - API key do LLM.
 
    Dificuldade: Facil.
-
-4. Criar modo debug:
-   - testar STT isolado.
-   - testar TTS isolado.
-   - testar Discord isolado.
-
-   Dificuldade: Media.
 
 Pronto quando:
 
@@ -700,9 +697,9 @@ Ordem mais segura:
 
 1. Fase 0 - Base do repositorio.
 2. Fase 1 - Configuracao e estado central.
-3. Fase 2 - Prova tecnica do Discord voice.
-4. Fase 4 - TTS tocando na call.
-5. Fase 3 - STT transcrevendo audio da call.
+3. Fase 2 - Discord voice.
+4. Fase 4 - TTS em PT-BR com clonagem.
+5. Fase 3 - STT em PT-BR.
 6. Fase 5 - LLM e prompt builder.
 7. Fase 6 - Pipeline completo.
 8. Fase 7 - Painel.
@@ -711,8 +708,6 @@ Ordem mais segura:
 11. Fase 10 - Streaming e otimizacao.
 12. Fase 11 - Seguranca e moderacao.
 13. Fase 12 - Refinamento da personalidade.
-
-Observacao: TTS aparece antes de STT na ordem pratica porque tocar audio na call valida rapidamente a saida de voz, que e essencial para o bot parecer vivo.
 
 ## Primeira tarefa real recomendada
 
@@ -733,7 +728,7 @@ Modelo recomendado: intermediario ou forte.
 
 1. Captura de audio do Discord em tempo real.
    - Dificuldade: Critica.
-   - Deve ser testada antes de investir muito em memoria ou painel.
+   - Deve ser priorizada antes de investir muito em memoria ou painel.
 
 2. Latencia STT + LLM + TTS.
    - Dificuldade: Critica.
@@ -768,7 +763,6 @@ Antes de editar codigo, o modelo deve:
 - checar arquivos ja existentes;
 - nao sobrescrever alteracoes do usuario;
 - implementar uma etapa pequena por vez;
-- testar quando possivel;
 - registrar bloqueios tecnicos no README ou em arquivo de notas.
 
 ## Definicao de MVP

@@ -231,6 +231,10 @@ Controles iniciais:
 - Ativar/desativar STT.
 - Ativar/desativar TTS.
 - Ativar/desativar respostas automaticas.
+- Escolher o modelo do TTS.
+- Escolher o modelo da IA.
+- Escolher a call/canal de voz do servidor.
+- Escolher quais membros o bot vai escutar.
 - Configurar nome, descricao e personalidade.
 - Configurar volume.
 - Configurar tempo de silencio antes do bot falar.
@@ -279,6 +283,35 @@ Risco:
 
 - Audio ruim de entrada derruba a qualidade da clonagem.
 - O painel deve avisar se o audio estiver baixo, muito curto ou com ruido excessivo.
+
+## Selecao de modelo e call
+
+### Recomendado: painel com selects persistentes
+
+O painel tambem deve deixar configurar:
+
+- o modelo de TTS, se houver mais de uma opcao;
+- o modelo da IA, principalmente se o backend suportar varios providers;
+- a call/canal de voz onde o bot vai entrar;
+- os membros que devem ser escutados ou ignorados.
+
+Isso deve ser persistido em arquivo de configuracao, para que o notebook do Colab apenas carregue as escolhas ja feitas.
+
+Fluxo sugerido:
+
+1. O painel lista os servidores disponiveis.
+2. O usuario escolhe o servidor e o canal de voz.
+3. O painel lista os membros online ou conectados naquela call.
+4. O usuario marca quem deve ser escutado.
+5. O backend salva essas regras em `settings.yaml` ou equivalente.
+6. O bot aplica as regras na proxima inicializacao ou em hot reload, se suportado.
+
+Regras recomendadas:
+
+- Permitir selecao por `guild_id` e `voice_channel_id`.
+- Permitir escuta de todos os membros, apenas de alguns membros, ou ignorar alguns membros.
+- Permitir trocar o canal sem editar codigo.
+- Permitir trocar o modelo sem reiniciar, quando a implementacao suportar.
 
 ## ngrok
 

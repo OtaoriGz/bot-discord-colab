@@ -1,0 +1,12 @@
+# Configurações Técnicas Globais
+
+language: "pt-BR"
+volume: 1.0
+silence_timeout: 2.0  # Tempo em segundos de silêncio do usuário antes do bot responder
+tts_model: "tts_models/multilingual/multi-dataset/xtts_v2"
+llm_model: "gemini-2.5-flash"
+
+# Configurações do Discord
+active_guild_id: null
+active_voice_channel_id: null
+listen_filter: []  # Lista de IDs de usuários do Discord que o bot deve escutar. Vazio = escuta todos.
