@@ -3,6 +3,16 @@ import os
 from pathlib import Path
 from typing import Optional
 
+# Workaround para o bug do __sink_listeners__ em versões de desenvolvimento do py-cord
+try:
+    import discord.sinks
+    if not hasattr(discord.sinks.Sink, '__sink_listeners__'):
+        discord.sinks.Sink.__sink_listeners__ = []
+    if not hasattr(discord.sinks.Sink, 'walk_children'):
+        discord.sinks.Sink.walk_children = lambda self: []
+except ImportError:
+    pass
+
 from .config import AppConfig
 from .state import CentralState
 
@@ -65,6 +75,7 @@ class DiscordVoiceBot:
 
         @bot.slash_command(name="join", description="Faz o bot entrar na call.")
         async def join(ctx):
+            await ctx.defer()
             voice_state = getattr(ctx.author, "voice", None)
             channel = voice_state.channel if voice_state else None
 
@@ -88,11 +99,13 @@ class DiscordVoiceBot:
 
         @bot.slash_command(name="leave", description="Faz o bot sair da call.")
         async def leave(ctx):
+            await ctx.defer()
             await self._disconnect_guild(ctx.guild.id)
             await ctx.respond("Sai da call.")
 
         @bot.slash_command(name="play_test_audio", description="Toca um arquivo de audio na call atual.")
         async def play_test_audio(ctx, path: Optional[str] = None):
+            await ctx.defer()
             voice_client = await self._get_voice_client(ctx.guild.id)
             if not voice_client or not voice_client.is_connected():
                 await ctx.respond("O bot precisa estar em uma call primeiro. Use /join.")
@@ -112,6 +125,7 @@ class DiscordVoiceBot:
 
         @bot.slash_command(name="record_test", description="Grava alguns segundos da call em WAV.")
         async def record_test(ctx, seconds: int = 5):
+            await ctx.defer()
             voice_client = await self._get_voice_client(ctx.guild.id)
             if not voice_client or not voice_client.is_connected():
                 await ctx.respond("O bot precisa estar em uma call primeiro. Use /join.")
