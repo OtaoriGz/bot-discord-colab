@@ -1,7 +1,7 @@
 pyyaml>=6.0.1
 pydantic>=2.0
 python-dotenv>=1.0.1
-py-cord[voice]==2.4.1
+py-cord[voice] @ git+https://github.com/Pycord-Development/pycord@v2.6.1-voice-hotfix
 pydantic-settings>=2.0.0
 
 # TTS (Sintetizador de voz)
