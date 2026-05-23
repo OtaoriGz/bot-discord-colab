@@ -45,25 +45,25 @@ class DiscordVoiceBot:
         intents.messages = True
         intents.message_content = True
 
-        bot = commands.Bot(command_prefix="-", intents=intents)
+        bot = discord.Bot(intents=intents)
         self.bot = bot
 
         @bot.event
         async def on_ready():
             print(f"Discord bot online as {bot.user}")
 
-        @bot.command(name="status", description="Mostra o status atual do bot.")
+        @bot.slash_command(name="status", description="Mostra o status atual do bot.")
         async def status(ctx):
             summary = self.state.get_summary()
             active_channel = summary.get("active_voice_channel") or "nenhum"
-            await ctx.send(
+            await ctx.respond(
                 (
                     f"Online. Canal de voz ativo: {active_channel}. "
                     f"STT: {summary.get('stt_ready')}. TTS: {summary.get('tts_ready')}."
                 )
             )
 
-        @bot.command(name="join", description="Faz o bot entrar na call.")
+        @bot.slash_command(name="join", description="Faz o bot entrar na call.")
         async def join(ctx):
             voice_state = getattr(ctx.author, "voice", None)
             channel = voice_state.channel if voice_state else None
@@ -72,7 +72,7 @@ class DiscordVoiceBot:
                 channel = bot.get_channel(self.config.active_voice_channel_id)
 
             if channel is None:
-                await ctx.send("Entre em uma call ou configure active_voice_channel_id.")
+                await ctx.respond("Entre em uma call ou configure active_voice_channel_id.")
                 return
 
             existing = await self._get_voice_client(ctx.guild.id)
@@ -84,23 +84,23 @@ class DiscordVoiceBot:
 
             self.voice_clients[ctx.guild.id] = voice_client
             self.state.active_voice_channel = channel.id
-            await ctx.send(f"Entrei na call: {channel.name}")
+            await ctx.respond(f"Entrei na call: {channel.name}")
 
-        @bot.command(name="leave", description="Faz o bot sair da call.")
+        @bot.slash_command(name="leave", description="Faz o bot sair da call.")
         async def leave(ctx):
             await self._disconnect_guild(ctx.guild.id)
-            await ctx.send("Sai da call.")
+            await ctx.respond("Sai da call.")
 
-        @bot.command(name="play_test_audio", description="Toca um arquivo de audio na call atual.")
+        @bot.slash_command(name="play_test_audio", description="Toca um arquivo de audio na call atual.")
         async def play_test_audio(ctx, path: Optional[str] = None):
             voice_client = await self._get_voice_client(ctx.guild.id)
             if not voice_client or not voice_client.is_connected():
-                await ctx.send("O bot precisa estar em uma call primeiro. Use -join.")
+                await ctx.respond("O bot precisa estar em uma call primeiro. Use /join.")
                 return
 
             audio_path = Path(path or os.getenv("TEST_AUDIO_PATH", "voices/test.wav"))
             if not audio_path.exists():
-                await ctx.send(f"Arquivo nao encontrado: {audio_path}")
+                await ctx.respond(f"Arquivo nao encontrado: {audio_path}")
                 return
 
             if voice_client.is_playing():
@@ -108,17 +108,17 @@ class DiscordVoiceBot:
 
             source = discord.FFmpegPCMAudio(str(audio_path))
             voice_client.play(source)
-            await ctx.send(f"Tocando audio: {audio_path}")
+            await ctx.respond(f"Tocando audio: {audio_path}")
 
-        @bot.command(name="record_test", description="Grava alguns segundos da call em WAV.")
+        @bot.slash_command(name="record_test", description="Grava alguns segundos da call em WAV.")
         async def record_test(ctx, seconds: int = 5):
             voice_client = await self._get_voice_client(ctx.guild.id)
             if not voice_client or not voice_client.is_connected():
-                await ctx.send("O bot precisa estar em uma call primeiro. Use -join.")
+                await ctx.respond("O bot precisa estar em uma call primeiro. Use /join.")
                 return
 
             if getattr(voice_client, "recording", False):
-                await ctx.send("Ja existe uma gravacao em andamento.")
+                await ctx.respond("Ja existe uma gravacao em andamento.")
                 return
 
             seconds = max(1, min(int(seconds or 5), 30))
@@ -137,7 +137,7 @@ class DiscordVoiceBot:
 
             sink = discord.sinks.WaveSink()
             voice_client.start_recording(sink, finished_callback, ctx.channel)
-            await ctx.send(f"Gravando por {seconds}s.")
+            await ctx.respond(f"Gravando por {seconds}s.")
 
             await asyncio.sleep(seconds)
             if getattr(voice_client, "recording", False):
