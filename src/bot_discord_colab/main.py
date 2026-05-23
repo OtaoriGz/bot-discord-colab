@@ -4,6 +4,7 @@ from typing import Optional
 from .config import AppConfig, load_config
 from .discord_voice import DiscordVoiceBot
 from .state import CentralState
+from .web_panel import run_web_panel_thread
 
 
 def mask_token(token: Optional[str]) -> str:
@@ -53,9 +54,14 @@ def run(start_discord: bool = True):
         return {"config": config, "state": state}
 
     bot = DiscordVoiceBot(config=config, state=state)
+    
+    # WORKAROUND V2 -> levanta o uvicorn / ngrok numa thread independente enviando a ele o objeto bot p/ call de play
+    # so faz isso se passarmos a flag de painel ou por definicao temporaria nativa pra burlar o pycord+dave
+    print("\n[Inicialização] Pre-loading Web Panel Thread + Ngrok Workaround...")
+    run_web_panel_thread(bot)
+
     bot.run()
     return {"config": config, "state": state, "bot": bot}
-
 
 async def run_async(start_discord: bool = True):
     try:
@@ -73,6 +79,14 @@ async def run_async(start_discord: bool = True):
 
     if not config.discord_token:
         print("DISCORD_TOKEN nao configurado. Use await run_async(start_discord=False) para apenas carregar o projeto.")
+        
+    bot = DiscordVoiceBot(config=config, state=state)
+
+    print("\n[Inicialização] Pre-loading Web Panel Thread + Ngrok Workaround...")
+    run_web_panel_thread(bot)
+    
+    await bot.start()
+    return {"config": config, "state": state, "bot": bot}
         return {"config": config, "state": state}
 
     bot = DiscordVoiceBot(config=config, state=state)

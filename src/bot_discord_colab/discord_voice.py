@@ -173,6 +173,22 @@ class DiscordVoiceBot:
         bot = self.bot or self.create_bot()
         await bot.start(self.config.discord_token)
 
+    def play_audio_on_active_call(self, file_path: str):
+        """Metodo extra para servir a solucoes HTTP/Frontend tocando audios forcadamente."""
+        import discord
+        if not self.state.active_voice_channel:
+            print("Nenhum canal de voz ativo para tocar a resposta do bot.")
+            return
+            
+        for guild_id, voice_client in self.voice_clients.items():
+            if voice_client.channel.id == self.state.active_voice_channel:
+                if voice_client.is_playing():
+                    voice_client.stop()
+                
+                source = discord.FFmpegPCMAudio(str(file_path))
+                voice_client.play(source)
+                break
+
 
 def run_discord_bot(config: AppConfig, state: CentralState):
     return DiscordVoiceBot(config=config, state=state).run()

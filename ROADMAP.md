@@ -192,7 +192,29 @@ Risco principal:
 
 - Recebimento de audio em tempo real no Discord pode ser instavel. Se `py-cord` nao atender, avaliar forks ou outra biblioteca antes de continuar.
 
-## Fase 3 - STT em PT-BR
+## Fase 3 - DAVE Workaround (Web Panel)
+
+Objetivo: Suprir a falha atual do py-cord em transcrever audio nativamente pelas restrições do protocolo DAVE do Discord.
+
+Tarefas:
+
+1. [x] Criar interface HTML para captura de microfone.
+   Dificuldade: Fácil.
+   
+2. [x] Criar módulo FastAPI para receber e processar audio (Upload e STT via faster-whisper)
+   Dificuldade: Média.
+
+3. [x] Criar fluxo LLM (Groq) e TTS (gTTS para fallback).
+   Dificuldade: Média.
+
+4. [x] Integrar Ngrok Tunnel e Uvicorn concorrentemente ao loop do Discord e usar `play_audio_on_active_call`.
+   Dificuldade: Crítica.
+
+Pronto quando:
+- Painel Web acessível compila fala e toca resposta de volta no Discord.
+- Contornamos o problema de recebimento nativo do Discord (DAVE).
+
+## Fase 4 - STT em PT-BR
 
 Objetivo: transformar audio da call em texto em portugues do Brasil.
 

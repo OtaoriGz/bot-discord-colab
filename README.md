@@ -35,6 +35,12 @@ Configuracoes previstas:
 - Configuracoes de TTS.
 - Outras opcoes futuras conforme o projeto evoluir.
 
+## Workaround Protocolo DAVE (Voz)
+
+**Importante:** O Discord recentemente ativou o protocolo DAVE (End-to-End Encryption) que quebrou temporariamente todas as bibliotecas de captação de áudio nativas (como `py-cord[voice]`).
+**Como workaround**, este projeto levanta um pequeno painel web (servido via Ngrok e FastAPI). 
+O usuário acessa o link gerado, clica em "Segure para Falar", e o áudio é processado via Faster-Whisper + LLM + TTS, com a resposta sendo tocada diretamente na call do Discord.
+
 ## Conceito do bot
 
 O bot deve agir como um participante da chamada, nao apenas como um comando automatico. Ele deve conseguir:
