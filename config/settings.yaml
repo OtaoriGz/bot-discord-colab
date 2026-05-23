@@ -4,7 +4,8 @@ language: "pt-BR"
 volume: 1.0
 silence_timeout: 2.0  # Tempo em segundos de silêncio do usuário antes do bot responder
 tts_model: "tts_models/multilingual/multi-dataset/xtts_v2"
-llm_model: "gemini-2.5-flash"
+llm_base_url: "https://api.groq.com/openai/v1"
+llm_model: "llama-3.1-8b-instant"
 
 # Configurações do Discord
 active_guild_id: null

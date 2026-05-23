@@ -158,11 +158,18 @@ os.environ["TTS_LANGUAGE"] = "pt"
 Se o LLM for OpenAI-compatible:
 
 ```python
-os.environ["LLM_BASE_URL"] = "https://api.openai.com/v1"
-os.environ["LLM_MODEL"] = "gpt-4o-mini"
+os.environ["LLM_BASE_URL"] = "https://api.groq.com/openai/v1"
+os.environ["LLM_MODEL"] = "llama-3.1-8b-instant"
 ```
 
-Se usar outro provider compatavel, trocar `LLM_BASE_URL` e `LLM_MODEL`.
+Para OpenRouter:
+
+```python
+os.environ["LLM_BASE_URL"] = "https://openrouter.ai/api/v1"
+os.environ["LLM_MODEL"] = "openai/gpt-4o-mini"
+```
+
+Se usar outro provider OpenAI-compatible, trocar `LLM_BASE_URL` e `LLM_MODEL`.
 
 Variaveis esperadas pelo projeto:
 

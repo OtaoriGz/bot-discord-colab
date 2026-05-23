@@ -21,6 +21,7 @@ def print_startup_summary(config: AppConfig):
     print(f"Nome do bot:       {config.name}")
     print(f"Wake word:         {config.wake_word}")
     print(f"Idioma:            {config.language}")
+    print(f"LLM base URL:      {config.llm_base_url}")
     print(f"Modelo LLM:        {config.llm_model}")
     print(f"Modelo TTS:        {config.tts_model}")
     print(f"Volume:            {config.volume}")
@@ -28,7 +29,7 @@ def print_startup_summary(config: AppConfig):
     print(f"Voz referencia:    {config.voice_reference}")
     print("-" * 60)
     print(f"Discord token:     {mask_token(config.discord_token)}")
-    print(f"Gemini API key:    {mask_token(config.gemini_api_key)}")
+    print(f"LLM API key:       {mask_token(config.llm_api_key)}")
     print(f"Ngrok auth token:  {mask_token(config.ngrok_authtoken)}")
     print("=" * 60)
 
@@ -53,6 +54,29 @@ def run(start_discord: bool = True):
 
     bot = DiscordVoiceBot(config=config, state=state)
     bot.run()
+    return {"config": config, "state": state, "bot": bot}
+
+
+async def run_async(start_discord: bool = True):
+    try:
+        config = load_config()
+    except Exception as exc:
+        print(f"Erro ao carregar configuracoes: {exc}", file=sys.stderr)
+        raise
+
+    print_startup_summary(config)
+    state = CentralState()
+
+    if not start_discord:
+        print("Modo sem Discord ativo. Configuracoes carregadas com sucesso.")
+        return {"config": config, "state": state}
+
+    if not config.discord_token:
+        print("DISCORD_TOKEN nao configurado. Use await run_async(start_discord=False) para apenas carregar o projeto.")
+        return {"config": config, "state": state}
+
+    bot = DiscordVoiceBot(config=config, state=state)
+    await bot.start()
     return {"config": config, "state": state, "bot": bot}
 
 

@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 class AppConfig(BaseModel):
     # Segredos e Tokens (Carregados do .env ou ambiente)
     discord_token: Optional[str] = None
-    gemini_api_key: Optional[str] = None
+    llm_api_key: Optional[str] = None
     ngrok_authtoken: Optional[str] = None
 
     # Configuração de Persona (bot_profile.yaml)
@@ -22,7 +22,8 @@ class AppConfig(BaseModel):
     volume: float = 1.0
     silence_timeout: float = 2.0
     tts_model: str = "tts_models/multilingual/multi-dataset/xtts_v2"
-    llm_model: str = "gemini-2.5-flash"
+    llm_base_url: str = "https://api.groq.com/openai/v1"
+    llm_model: str = "llama-3.1-8b-instant"
     active_guild_id: Optional[int] = None
     active_voice_channel_id: Optional[int] = None
     listen_filter: List[int] = []
@@ -54,7 +55,9 @@ def load_config(
     # 3. Aplicar overrides de variáveis de ambiente
     env_mappings = {
         "DISCORD_TOKEN": "discord_token",
-        "GEMINI_API_KEY": "gemini_api_key",
+        "LLM_API_KEY": "llm_api_key",
+        "GROQ_API_KEY": "llm_api_key",
+        "OPENROUTER_API_KEY": "llm_api_key",
         "NGROK_AUTHTOKEN": "ngrok_authtoken",
         "BOT_NAME": "name",
         "BOT_DESCRIPTION": "description",
@@ -64,7 +67,9 @@ def load_config(
         "BOT_VOLUME": "volume",
         "BOT_SILENCE_TIMEOUT": "silence_timeout",
         "BOT_TTS_MODEL": "tts_model",
+        "LLM_BASE_URL": "llm_base_url",
         "BOT_LLM_MODEL": "llm_model",
+        "LLM_MODEL": "llm_model",
         "BOT_ACTIVE_GUILD_ID": "active_guild_id",
         "BOT_ACTIVE_VOICE_CHANNEL_ID": "active_voice_channel_id",
         "BOT_LISTEN_FILTER": "listen_filter",

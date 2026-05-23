@@ -150,6 +150,17 @@ class DiscordVoiceBot:
         bot = self.bot or self.create_bot()
         bot.run(self.config.discord_token)
 
+    async def start(self):
+        if not self.config.discord_token:
+            raise RuntimeError("DISCORD_TOKEN nao configurado.")
+
+        bot = self.bot or self.create_bot()
+        await bot.start(self.config.discord_token)
+
 
 def run_discord_bot(config: AppConfig, state: CentralState):
     return DiscordVoiceBot(config=config, state=state).run()
+
+
+async def start_discord_bot(config: AppConfig, state: CentralState):
+    return await DiscordVoiceBot(config=config, state=state).start()

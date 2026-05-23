@@ -311,7 +311,9 @@ Solucao:
 Nunca coloque no GitHub:
 
 - DISCORD_TOKEN
-- GEMINI_API_KEY
+- LLM_API_KEY
+- LLM_BASE_URL
+- LLM_MODEL
 - NGROK_AUTHTOKEN
 
 O correto e colocar esses valores pelo notebook, usando getpass.
@@ -339,6 +341,6 @@ As proximas fases vao adicionar:
 
 - STT em PT-BR.
 - TTS com clonagem de voz.
-- LLM.
+- LLM via Groq ou OpenRouter.
 - Painel web via ngrok.
 - Memoria.
