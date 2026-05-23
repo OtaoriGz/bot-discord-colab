@@ -432,7 +432,7 @@ for segment in segments:
 
 ## Celula 14 - Teste isolado do Discord
 
-Objetivo: iniciar o bot minimo e testar `/join`, `/leave` e `/status`.
+Objetivo: iniciar o bot minimo e testar `-join`, `-leave` e `-status`.
 
 Forma esperada quando `discord_voice.py` existir:
 
@@ -458,16 +458,16 @@ print("Bot Discord iniciado.")
 Teste manual no Discord:
 
 ```text
-/status
-/join
-/leave
+-status
+-join
+-leave
 ```
 
 Depois adicionar:
 
 ```text
-/play_test_audio
-/record_test
+-play_test_audio
+-record_test
 ```
 
 ## Celula 15 - Teste de audio fixo na call
@@ -480,10 +480,10 @@ Forma esperada:
 TEST_AUDIO_PATH = "/content/teste_tts.wav"
 os.environ["TEST_AUDIO_PATH"] = TEST_AUDIO_PATH
 
-print("No Discord, usar /play_test_audio depois que o bot entrar na call.")
+print("No Discord, usar -play_test_audio depois que o bot entrar na call.")
 ```
 
-O comando `/play_test_audio` deve:
+O comando `-play_test_audio` deve:
 
 - pegar `TEST_AUDIO_PATH`;
 - tocar no voice channel atual;
@@ -496,10 +496,10 @@ Objetivo: validar a parte mais arriscada do projeto.
 Forma esperada:
 
 ```python
-print("No Discord, usar /record_test para capturar alguns segundos da call.")
+print("No Discord, usar -record_test para capturar alguns segundos da call.")
 ```
 
-O comando `/record_test` deve:
+O comando `-record_test` deve:
 
 - iniciar captura com `py-cord`;
 - gravar audio temporario;
@@ -744,8 +744,8 @@ Antes de considerar o notebook pronto:
 - TTS gerou audio em PT-BR.
 - STT transcreveu audio em PT-BR.
 - Bot Discord conectou.
-- `/status` respondeu.
-- `/join` entrou na call.
+- `-status` respondeu.
+- `-join` entrou na call.
 - Bot tocou audio na call.
 - Bot capturou audio da call.
 - Pipeline completo funcionou pelo menos uma vez.
