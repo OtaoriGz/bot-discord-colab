@@ -6,7 +6,7 @@ pydantic-settings>=2.0.0
 
 # TTS (Sintetizador de voz)
 gTTS>=2.5.1
-TTS>=0.22.0
+# TTS>=0.22.0 # Opcional: Coqui TTS (apenas para Python >=3.9,<3.12 no Colab. O bot usará gTTS localmente como fallback)
 
 # STT (Transcritor de voz)
 faster-whisper>=1.0.0

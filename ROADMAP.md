@@ -246,11 +246,11 @@ Objetivo: fazer o bot falar na call com voz clonada.
 
 Tarefas:
 
-1. Instalar e configurar `Coqui TTS` com XTTS-v2 no Colab.
+1. [x] Instalar e configurar `Coqui TTS` com XTTS-v2 no Colab.
 
    Dificuldade: Dificil.
 
-2. Criar modulo `tts.py`:
+2. [x] Criar modulo `tts.py`:
    - carregar XTTS-v2.
    - usar `language="pt"`.
    - usar `speaker_wav` configuravel.
@@ -258,7 +258,7 @@ Tarefas:
 
    Dificuldade: Dificil.
 
-3. Criar limite de texto para TTS:
+3. [x] Criar limite de texto para TTS:
    - maximo inicial: 220 caracteres.
    - cortar ou pedir resposta menor quando passar disso.
 
@@ -268,8 +268,8 @@ Tarefas:
 
    Dificuldade: Dificil.
 
-5. Criar fallback para TTS:
-   - Piper ou audio fixo de teste se XTTS falhar.
+5. [x] Criar fallback para TTS:
+   - gTTS como fallback quando XTTS nao estiver disponivel.
 
    Dificuldade: Media.
 
