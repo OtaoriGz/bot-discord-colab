@@ -79,17 +79,13 @@ async def run_async(start_discord: bool = True):
 
     if not config.discord_token:
         print("DISCORD_TOKEN nao configurado. Use await run_async(start_discord=False) para apenas carregar o projeto.")
-        
+        return {"config": config, "state": state}
+
     bot = DiscordVoiceBot(config=config, state=state)
 
     print("\n[Inicialização] Pre-loading Web Panel Thread + Ngrok Workaround...")
     run_web_panel_thread(bot)
     
-    await bot.start()
-    return {"config": config, "state": state, "bot": bot}
-        return {"config": config, "state": state}
-
-    bot = DiscordVoiceBot(config=config, state=state)
     await bot.start()
     return {"config": config, "state": state, "bot": bot}
 
