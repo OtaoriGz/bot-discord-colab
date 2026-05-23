@@ -1,5 +1,7 @@
 # Bot Discord Colab
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/OtaoriGz/bot-discord-colab/blob/main/notebooks/bot_discord_colab_runner.ipynb)
+
 ## Contexto do projeto
 
 Este projeto tem como objetivo criar um bot para Discord que rode no Google Colab e seja configurado por um painel de controle acessado via ngrok.
