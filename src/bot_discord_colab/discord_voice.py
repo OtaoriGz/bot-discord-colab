@@ -17,11 +17,12 @@ class DiscordVoiceBot:
     def _require_discord(self):
         try:
             import discord
+            from discord.ext import commands
         except ImportError as exc:
             raise RuntimeError(
                 "py-cord is not installed. Install dependencies with: pip install -r requirements.txt"
             ) from exc
-        return discord
+        return discord, commands
 
     async def _get_voice_client(self, guild_id: int):
         return self.voice_clients.get(guild_id)
@@ -36,32 +37,33 @@ class DiscordVoiceBot:
         self.state.active_voice_channel = None
 
     def create_bot(self):
-        discord = self._require_discord()
+        discord, commands = self._require_discord()
 
         intents = discord.Intents.default()
         intents.guilds = True
         intents.voice_states = True
+        intents.messages = True
+        intents.message_content = True
 
-        bot = discord.Bot(intents=intents)
+        bot = commands.Bot(command_prefix="-", intents=intents)
         self.bot = bot
 
         @bot.event
         async def on_ready():
             print(f"Discord bot online as {bot.user}")
 
-        @bot.slash_command(name="status", description="Mostra o status atual do bot.")
+        @bot.command(name="status", description="Mostra o status atual do bot.")
         async def status(ctx):
             summary = self.state.get_summary()
             active_channel = summary.get("active_voice_channel") or "nenhum"
-            await ctx.respond(
+            await ctx.send(
                 (
                     f"Online. Canal de voz ativo: {active_channel}. "
                     f"STT: {summary.get('stt_ready')}. TTS: {summary.get('tts_ready')}."
-                ),
-                ephemeral=True,
+                )
             )
 
-        @bot.slash_command(name="join", description="Faz o bot entrar na call.")
+        @bot.command(name="join", description="Faz o bot entrar na call.")
         async def join(ctx):
             voice_state = getattr(ctx.author, "voice", None)
             channel = voice_state.channel if voice_state else None
@@ -70,7 +72,7 @@ class DiscordVoiceBot:
                 channel = bot.get_channel(self.config.active_voice_channel_id)
 
             if channel is None:
-                await ctx.respond("Entre em uma call ou configure active_voice_channel_id.", ephemeral=True)
+                await ctx.send("Entre em uma call ou configure active_voice_channel_id.")
                 return
 
             existing = await self._get_voice_client(ctx.guild.id)
@@ -82,23 +84,23 @@ class DiscordVoiceBot:
 
             self.voice_clients[ctx.guild.id] = voice_client
             self.state.active_voice_channel = channel.id
-            await ctx.respond(f"Entrei na call: {channel.name}", ephemeral=True)
+            await ctx.send(f"Entrei na call: {channel.name}")
 
-        @bot.slash_command(name="leave", description="Faz o bot sair da call.")
+        @bot.command(name="leave", description="Faz o bot sair da call.")
         async def leave(ctx):
             await self._disconnect_guild(ctx.guild.id)
-            await ctx.respond("Sai da call.", ephemeral=True)
+            await ctx.send("Sai da call.")
 
-        @bot.slash_command(name="play_test_audio", description="Toca um arquivo de audio na call atual.")
+        @bot.command(name="play_test_audio", description="Toca um arquivo de audio na call atual.")
         async def play_test_audio(ctx, path: Optional[str] = None):
             voice_client = await self._get_voice_client(ctx.guild.id)
             if not voice_client or not voice_client.is_connected():
-                await ctx.respond("O bot precisa estar em uma call primeiro. Use /join.", ephemeral=True)
+                await ctx.send("O bot precisa estar em uma call primeiro. Use -join.")
                 return
 
             audio_path = Path(path or os.getenv("TEST_AUDIO_PATH", "voices/test.wav"))
             if not audio_path.exists():
-                await ctx.respond(f"Arquivo nao encontrado: {audio_path}", ephemeral=True)
+                await ctx.send(f"Arquivo nao encontrado: {audio_path}")
                 return
 
             if voice_client.is_playing():
@@ -106,17 +108,17 @@ class DiscordVoiceBot:
 
             source = discord.FFmpegPCMAudio(str(audio_path))
             voice_client.play(source)
-            await ctx.respond(f"Tocando audio: {audio_path}", ephemeral=True)
+            await ctx.send(f"Tocando audio: {audio_path}")
 
-        @bot.slash_command(name="record_test", description="Grava alguns segundos da call em WAV.")
-        async def record_test(ctx, seconds: Optional[int] = 5):
+        @bot.command(name="record_test", description="Grava alguns segundos da call em WAV.")
+        async def record_test(ctx, seconds: int = 5):
             voice_client = await self._get_voice_client(ctx.guild.id)
             if not voice_client or not voice_client.is_connected():
-                await ctx.respond("O bot precisa estar em uma call primeiro. Use /join.", ephemeral=True)
+                await ctx.send("O bot precisa estar em uma call primeiro. Use -join.")
                 return
 
             if getattr(voice_client, "recording", False):
-                await ctx.respond("Ja existe uma gravacao em andamento.", ephemeral=True)
+                await ctx.send("Ja existe uma gravacao em andamento.")
                 return
 
             seconds = max(1, min(int(seconds or 5), 30))
@@ -135,7 +137,7 @@ class DiscordVoiceBot:
 
             sink = discord.sinks.WaveSink()
             voice_client.start_recording(sink, finished_callback, ctx.channel)
-            await ctx.respond(f"Gravando por {seconds}s.", ephemeral=True)
+            await ctx.send(f"Gravando por {seconds}s.")
 
             await asyncio.sleep(seconds)
             if getattr(voice_client, "recording", False):
