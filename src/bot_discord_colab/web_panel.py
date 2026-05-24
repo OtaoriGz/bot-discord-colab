@@ -75,6 +75,9 @@ def status():
 async def upload_audio(file: UploadFile = File(...), username: str = Form("WebUser")):
     if not bot_instance:
         return {"message": "Erro: O Bot discord nao esta linkado"}
+        
+    if not bot_instance.state.active_voice_channel:
+        return {"message": "Erro: O bot precisa entrar em uma call (use /join no Discord)", "transcription": "", "reply": ""}
 
     async with pipeline_lock:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_audio:

@@ -149,7 +149,7 @@ class TTSManager:
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(
             None,
-            lambda: gTTS(text=text, lang="pt-br", slow=False).save(output_path),
+            lambda: gTTS(text=text, lang="pt", slow=False).save(output_path),
         )
 
         print(f"[TTS] Áudio gTTS gerado: {output_path}")
