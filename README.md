@@ -35,11 +35,15 @@ Configuracoes previstas:
 - Configuracoes de TTS.
 - Outras opcoes futuras conforme o projeto evoluir.
 
-## Workaround Protocolo DAVE (Voz)
+## Workaround Protocolo DAVE (Voz Multi-Acesso)
 
 **Importante:** O Discord recentemente ativou o protocolo DAVE (End-to-End Encryption) que quebrou temporariamente todas as bibliotecas de captação de áudio nativas (como `py-cord[voice]`).
-**Como workaround**, este projeto levanta um pequeno painel web (servido via Ngrok e FastAPI). 
-O usuário acessa o link gerado, clica em "Segure para Falar", e o áudio é processado via Faster-Whisper + LLM + TTS, com a resposta sendo tocada diretamente na call do Discord.
+**Como workaround**, este projeto levanta um pequeno painel web (servido via Ngrok e FastAPI).
+Esse painel possui duas rotas:
+1. **/user**: Rota aberta para visitantes/usuários segurarem para enviar áudio ao Bot.
+2. **/admin**: Rota fechada com senha (configurada no Colab via variável `ADMIN_PASSWORD`) onde futuramente configuraremos a memória/temperamento do bot, e que já permite que você envie áudios diretamente com o nome de Admin.
+
+O usuário acessa o respectivo link, clica em "Segure para Falar", e o áudio é processado via Faster-Whisper + LLM + XTTS-v2/gTTS, com a resposta sendo tocada diretamente na call do Discord.
 
 ## Conceito do bot
 

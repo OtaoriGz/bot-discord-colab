@@ -1,4 +1,4 @@
-GUIA PARA RODAR O BOT NO COLAB E COLOCAR NO SERVIDOR
+﻿GUIA PARA RODAR O BOT NO COLAB E COLOCAR NO SERVIDOR
 =====================================================
 
 Este guia explica como colocar o bot no seu servidor Discord e como executar o projeto pelo Google Colab.
@@ -20,7 +20,7 @@ Voce precisa de:
 - O repositorio publicado no GitHub.
 - Google Colab.
 
-Por enquanto, para a fase atual, o ngrok ainda nao e necessario porque o painel web ainda nao foi implementado.
+Para esta fase o NGrok já é obrigatório pois o web painel serve de workaround para burlar as limitações de áudio base do Discord.
 
 
 2. CRIAR O BOT NO DISCORD DEVELOPER PORTAL
@@ -167,49 +167,30 @@ Rode as celulas em ordem:
 
 1. Configurar repositorio.
 2. Verificar runtime.
-3. Instalar dependencias de sistema.
+3. Instalar dependencias de sistema e utilitÃ¡rios (ffmpeg).
 4. Clonar ou atualizar o repo.
-5. Instalar dependencias Python.
-6. Configurar variaveis secretas.
-7. Configurar canal e arquivos opcionais.
+5. Instalar dependencias Python (incluindo Ngrok e FastAPI).
+6. Configurar variaveis secretas. Neste momento o Colab pedirÃ¡ para inserir suas chaves do DISCORD_TOKEN, GROQ_API_KEY, NGROK_AUTH_TOKEN e definir seu ADMIN_PASSWORD. 
+7. Configurar canal e arquivos opcionais (como o de modelo de voz XTTS).
 8. Adicionar src ao Python path e validar import.
-9. Rodar modo sem Discord.
-10. Criar audio de teste.
-11. Iniciar bot Discord.
+9. Iniciar bot Discord.
 
-Na celula de variaveis secretas, cole o token quando o Colab pedir:
-
-Discord bot token:
-
-O token nao aparece na tela e nao vai para o GitHub.
+O token e senhas nao aparecem na tele e nÃ£o vao para o GitHub.
 
 
-9. TESTAR NO DISCORD
---------------------
+9. TESTAR NO DISCORD E NO PAINEL WEB
+------------------------------------
 
-Depois que a celula "Iniciar bot Discord" mostrar que o bot esta online, va para o Discord.
+Depois que a celula "Iniciar bot Discord" mostrar que o bot esta online, observe os logs no Colab, haverÃ¡ um link como https://algumacoisa.ngrok.app . Esse Ã© o link do Workaround Web (pois o Discord barrou capturas via DAVE).
 
-Entre em uma call no servidor e use os comandos:
+Va para o Discord:
+1. Entre em uma call.
+2. Use /join para o bot entrar na sua call.
 
-/status
-
-Mostra se o bot esta online e o canal de voz ativo.
-
-/join
-
-Faz o bot entrar na call em que voce esta.
-
-/play_test_audio path:/content/test_audio.wav
-
-Faz o bot tocar um audio simples na call.
-
-/record_test seconds:5
-
-Faz o bot gravar alguns segundos da call.
-
-/leave
-
-Faz o bot sair da call.
+VÃ¡ para o Navegador:
+1. Abra o link gerado pelo Ngrok.
+2. Acesse como User ou como Admin (com a senha que definiu).
+3. Segure "Segure para falar", solte, e observe! O bot logo enviarÃ¡ o Ã¡udio da sua resposta Ã  call do Discord.
 
 
 10. ONDE FICAM AS GRAVACOES
