@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -18,9 +18,9 @@
     </style>
 </head>
 <body>
-    <div class="nav"><a href="/">← Voltar ao Início</a></div>
+    <div class="nav"><a href="/">â† Voltar ao InÃ­cio</a></div>
     <h1>Microfone via Web</h1>
-    <p>Segure o botão abaixo para falar com o bot.</p>
+    <p>Segure o botÃ£o abaixo para falar com o bot.</p>
     
     <button id="recordBtn">Segure para Falar</button>
     <p id="status">Pronto para gravar.</p>
@@ -50,7 +50,7 @@
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 audioChunks = [];
-                statusText.innerText = "Processando áudio...";
+                statusText.innerText = "Processando Ã¡udio...";
                 recordBtn.disabled = true;
                 
                 const formData = new FormData();
@@ -62,19 +62,19 @@
                     
                     if (response.ok && result.transcription) {
                         statusText.innerText = "Respondido!";
-                        appendLog("Você", result.transcription, "user-text");
+                        appendLog("VocÃª", result.transcription, "user-text");
                         appendLog("Neuro", result.reply, "bot-text");
                     } else {
                         statusText.innerText = "Erro: " + (result.message || "Falha na resposta.");
                     }
                 } catch (err) {
-                    statusText.innerText = "Erro de conexão com o servidor.";
+                    statusText.innerText = "Erro de conexÃ£o com o servidor.";
                 }
                 
                 recordBtn.disabled = false;
             };
         }).catch(err => {
-            statusText.innerText = "Erro ao acessar microfone. Verifique as permissões do navegador.";
+            statusText.innerText = "Erro ao acessar microfone. Verifique as permissÃµes do navegador.";
             recordBtn.disabled = true;
         });
 
