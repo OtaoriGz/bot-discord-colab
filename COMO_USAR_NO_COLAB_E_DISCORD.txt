@@ -309,10 +309,13 @@ Se um token vazar:
 14. STATUS DA FASE ATUAL
 ------------------------
 
-Neste momento, o notebook testa a Fase 2:
+Neste momento, o notebook abrange a Fase 4:
 
-- Bot Discord.
-- Slash commands.
+- STT Otimizado pt-br usando faster-whisper.
+- Rotas /user e /admin do painel Web para workaround.
+- Interação com LLM com armazenamento dinâmico.
+- TTS com Clonagem (Coqui XTTS) e gTTS fallback.
+- O audio flui perfeitamente para o Painel de Voz e do Web para o Voice.
 - Entrar na call.
 - Sair da call.
 - Tocar audio fixo.

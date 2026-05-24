@@ -1,7 +1,7 @@
-import os
+﻿import os
 import requests
 
-def generate_reply(text: str) -> str:
+def generate_reply(text: str, config=None, state=None) -> str:
     """Usa a API externa via LLM para gerar uma fala natural"""
     api_key = os.getenv("LLM_API_KEY")
     base_url = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
@@ -15,20 +15,32 @@ def generate_reply(text: str) -> str:
         "Content-Type": "application/json"
     }
 
-    # Contexto base (simplificado para o MVP)
+    bot_name = config.name if config else "Neuro"
+
     system_prompt = (
-        "Você é Neuro, uma pessoa participando de uma chamada de voz (call) no Discord conversando com amigos. "
+        f"Você é {bot_name}, uma pessoa participando de uma chamada de voz (call) no Discord conversando com amigos. "
         "Você deve falar e reagir de forma SUPER curta, casual, orgânica e humanizada. "
         "Responda sempre em português do Brasil (pt-BR). Tente limitar a resposta a 1 ou no máximo 2 frases fluidas. "
-        "Não use emojis, markdown ou formatos difíceis de serem falados, pois a sua resposta será lida pelo seu clone de vóz."
+        "Não use emojis, markdown ou formatos difíceis de serem falados, pois a sua resposta será lida pelo seu clone de voz."
     )
+
+    history_messages = [{"role": "system", "content": system_prompt}]
+    
+    if state:
+        combined = []
+        for t in state.recent_transcripts:
+            combined.append((t.timestamp, {"role": "user", "content": f"{t.username} disse: {t.text}"}))
+        for r in state.recent_responses:
+            combined.append((r.timestamp, {"role": "assistant", "content": r.text}))
+            
+        combined.sort(key=lambda x: x[0])
+        history_messages.extend([item[1] for item in combined[-8:]])
+        
+    history_messages.append({"role": "user", "content": text})
 
     payload = {
         "model": model,
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": text}
-        ],
+        "messages": history_messages,
         "max_tokens": 150,
         "temperature": 0.8
     }

@@ -44,7 +44,7 @@ class DiscordVoiceBot:
                 voice_client.stop_recording()
             await voice_client.disconnect(force=True)
             self.voice_clients.pop(guild_id, None)
-        self.state.active_voice_channel = None
+        await self.state.set_active_voice_channel(None)
 
     def create_bot(self):
         discord, commands = self._require_discord()
@@ -94,7 +94,7 @@ class DiscordVoiceBot:
                 voice_client = await channel.connect()
 
             self.voice_clients[ctx.guild.id] = voice_client
-            self.state.active_voice_channel = channel.id
+            await self.state.set_active_voice_channel(channel.id)
             await ctx.respond(f"Entrei na call: {channel.name}")
 
         @bot.slash_command(name="leave", description="Faz o bot sair da call.")
@@ -174,20 +174,33 @@ class DiscordVoiceBot:
         await bot.start(self.config.discord_token)
 
     def play_audio_on_active_call(self, file_path: str):
-        """Metodo extra para servir a solucoes HTTP/Frontend tocando audios forcadamente."""
         import discord
         if not self.state.active_voice_channel:
             print("Nenhum canal de voz ativo para tocar a resposta do bot.")
             return
-            
-        for guild_id, voice_client in self.voice_clients.items():
-            if voice_client.channel.id == self.state.active_voice_channel:
-                if voice_client.is_playing():
-                    voice_client.stop()
-                
-                source = discord.FFmpegPCMAudio(str(file_path))
-                voice_client.play(source)
-                break
+
+        def _do_play():
+            for guild_id, voice_client in self.voice_clients.items():
+                if voice_client.channel.id == self.state.active_voice_channel:
+                    if voice_client.is_playing():
+                        voice_client.stop()
+                    
+                    source = discord.FFmpegPCMAudio(str(file_path))
+                    
+                    def after_play(e):
+                        import os
+                        try:
+                            if os.path.exists(file_path):
+                                os.remove(file_path)
+                        except: pass
+
+                    voice_client.play(source, after=after_play)
+                    break
+
+        if self.bot and self.bot.loop:
+            self.bot.loop.call_soon_threadsafe(_do_play)
+        else:
+            _do_play()
 
 
 def run_discord_bot(config: AppConfig, state: CentralState):
@@ -196,3 +209,4 @@ def run_discord_bot(config: AppConfig, state: CentralState):
 
 async def start_discord_bot(config: AppConfig, state: CentralState):
     return await DiscordVoiceBot(config=config, state=state).start()
+
