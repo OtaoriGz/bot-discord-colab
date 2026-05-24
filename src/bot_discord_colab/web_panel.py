@@ -35,17 +35,32 @@ async def startup_event():
 @app.get("/", response_class=HTMLResponse)
 def read_root():
     index_path = Path("web/index.html")
-    return index_path.read_text(encoding="utf-8") if index_path.exists() else "<h1>Erro</h1>"
+    if index_path.exists():
+        try:
+            return index_path.read_text(encoding="utf-8-sig")
+        except UnicodeDecodeError:
+            return index_path.read_text(encoding="utf-16", errors="replace")
+    return "<h1>Erro</h1>"
 
 @app.get("/user", response_class=HTMLResponse)
 def view_user():
     user_path = Path("web/user.html")
-    return user_path.read_text(encoding="utf-8") if user_path.exists() else "<h1>Erro</h1>"
+    if user_path.exists():
+        try:
+            return user_path.read_text(encoding="utf-8-sig")
+        except UnicodeDecodeError:
+            return user_path.read_text(encoding="utf-16", errors="replace")
+    return "<h1>Erro</h1>"
 
 @app.get("/admin", response_class=HTMLResponse)
 def view_admin():
     admin_path = Path("web/admin.html")
-    return admin_path.read_text(encoding="utf-8") if admin_path.exists() else "<h1>Erro</h1>"
+    if admin_path.exists():
+        try:
+            return admin_path.read_text(encoding="utf-8-sig")
+        except UnicodeDecodeError:
+            return admin_path.read_text(encoding="utf-16", errors="replace")
+    return "<h1>Erro</h1>"
 
 @app.get("/api/check_admin")
 def check_admin(pw: str = ""):
