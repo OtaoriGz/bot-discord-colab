@@ -192,27 +192,30 @@ Risco principal:
 
 - Recebimento de audio em tempo real no Discord pode ser instavel. Se `py-cord` nao atender, avaliar forks ou outra biblioteca antes de continuar.
 
-## Fase 3 - DAVE Workaround (Web Panel)
+## Fase 3 - DAVE Workaround (Web Panel Dividido)
 
-Objetivo: Suprir a falha atual do py-cord em transcrever audio nativamente pelas restrições do protocolo DAVE do Discord.
+Objetivo: Suprir a falha atual do py-cord em transcrever audio nativamente pelas restrições do protocolo DAVE do Discord, fornecendo um painel web duplo.
 
 Tarefas:
 
-1. [x] Criar interface HTML para captura de microfone.
+1. [x] Criar interface HTML para visitantes (Página de Usuário e STT).
    Dificuldade: Fácil.
    
-2. [x] Criar módulo FastAPI para receber e processar audio (Upload e STT via faster-whisper)
+2. [x] Criar interface HTML para Administrador com autenticação (Página Admin + STT integrado).
+   Dificuldade: Fácil.
+   
+3. [x] Criar módulo FastAPI para receber e processar audio e gerenciar rotas múltiplas (/user, /admin, login).
    Dificuldade: Média.
 
-3. [x] Criar fluxo LLM (Groq) e TTS (gTTS para fallback).
+4. [x] Criar fluxo LLM (Groq) e TTS (gTTS para fallback).
    Dificuldade: Média.
 
-4. [x] Integrar Ngrok Tunnel e Uvicorn concorrentemente ao loop do Discord e usar `play_audio_on_active_call`.
+5. [x] Integrar Ngrok Tunnel e Uvicorn concorrentemente ao loop do Discord e usar `play_audio_on_active_call`.
    Dificuldade: Crítica.
 
 Pronto quando:
-- Painel Web acessível compila fala e toca resposta de volta no Discord.
-- Contornamos o problema de recebimento nativo do Discord (DAVE).
+- Painel Web acessível divide visitantes de admins (exigindo senha do admin setada no Colab).
+- Contornamos o problema de recebimento nativo do Discord (DAVE) permitindo que o admin e o público mandem a voz de forma centralizada pelo navegador.
 
 ## Fase 4 - STT em PT-BR
 
@@ -220,11 +223,11 @@ Objetivo: transformar audio da call em texto em portugues do Brasil.
 
 Tarefas:
 
-1. Instalar e configurar `faster-whisper` no Colab.
+1. [x] Instalar e configurar `faster-whisper` no Colab.
 
    Dificuldade: Media.
 
-2. Criar modulo `stt.py`:
+2. [x] Criar modulo `stt.py`:
    - carregar modelo `small` por padrao.
    - usar `language="pt"`.
    - usar `vad_filter=True`.
@@ -232,7 +235,7 @@ Tarefas:
 
    Dificuldade: Dificil.
 
-3. Criar fila de transcricao:
+3. [x] Criar fila de transcricao:
    - receber chunks da call.
    - descartar silencio.
    - transcrever em ordem.
@@ -240,14 +243,14 @@ Tarefas:
 
    Dificuldade: Dificil.
 
-4. Ajustar modelos:
+4. [x] Ajustar modelos:
    - `base` para modo leve.
    - `small` como padrao.
    - `medium` se a qualidade em PT-BR estiver ruim.
 
    Dificuldade: Media.
 
-5. Registrar transcricao com metadados:
+5. [x] Registrar transcricao com metadados:
    - usuario
    - timestamp
    - texto
@@ -286,7 +289,7 @@ Tarefas:
 
    Dificuldade: Facil.
 
-4. Tocar audio gerado na call.
+4. [x] Tocar audio gerado na call.
 
    Dificuldade: Dificil.
 

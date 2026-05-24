@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neuro - Painel de Administração</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin-top: 20px; background-color: #2c2f33; color: white; }
+        .nav { margin-bottom: 20px; }
+        .nav a { color: #7289da; text-decoration: none; }
+        .hidden { display: none; }
+        input[type="password"] { padding: 10px; font-size: 16px; border-radius: 5px; border: none; }
+        .btn { padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; border: none; background-color: #7289da; color: white; }
+        .btn:hover { background-color: #5b6eae; }
+        #authSection { margin-top: 100px; }
+        
+        /* Voice styles */
+        .voice-section { margin-top: 30px; border-top: 1px solid #7289da; padding-top: 20px; }
+        #recordBtn { padding: 20px 40px; font-size: 20px; border-radius: 10px; cursor: pointer; border: none; background-color: #7289da; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: background-color 0.2s; }
+        #recordBtn:active { background-color: #5b6eae; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transform: translateY(2px); }
+        #recordBtn:disabled { background-color: #99aab5; cursor: not-allowed; }
+        #status { margin-top: 20px; font-size: 18px; color: #99aab5; }
+        .log-container { margin: 20px auto; width: 80%; max-width: 600px; background-color: #23272a; padding: 15px; border-radius: 8px; text-align: left; font-size: 14px; min-height: 100px; max-height: 300px; overflow-y: auto; color: #ccc; }
+        .user-text { color: #43b581; }
+        .bot-text { color: #faa61a; }
+        
+        /* Admin specific stats/styles */
+        .stats-box { background-color: #23272a; display: inline-block; padding: 20px; border-radius: 10px; margin: 10px; text-align: left; min-width: 250px; }
+    </style>
+</head>
+<body>
+    <div class="nav"><a href="/">← Voltar ao Início</a></div>
+    
+    <div id="authSection">
+        <h2>Acesso Restrito</h2>
+        <p>Insira a senha do administrador para acessar o painel de controle:</p>
+        <input type="password" id="adminPassword" placeholder="Senha..." />
+        <button class="btn" onclick="checkAuth()">Entrar</button>
+        <p id="authError" style="color: #f04747; display: none;">Senha incorreta.</p>
+    </div>
+
+    <div id="adminPanel" class="hidden">
+        <h1>Painel de Controle do Bot</h1>
+        
+        <div>
+            <div class="stats-box">
+                <h3>Ajustes do Bot</h3>
+                <p>Status: <span style="color:#43b581">Online</span></p>
+                <p>Aqui você poderá ajustar a personalidade, resetar o bot, chutar da call, etc. (Em desenvolvimento)</p>
+            </div>
+        </div>
+
+        <div class="voice-section">
+            <h2>Transmissão de Voz (Global)</h2>
+            <p>Admin também pode falar com o bot por aqui!</p>
+            <button id="recordBtn">Segure para Falar</button>
+            <p id="status">Pronto para gravar.</p>
+            <div class="log-container" id="logBox"></div>
+        </div>
+    </div>
+
+    <script>
+        let adminPass = "";
+        async function checkAuth() {
+            const pwd = document.getElementById('adminPassword').value;
+            // Valida a senha na API (aqui para simplificar, enviamos um GET /api/check_admin?pw=XYZ)
+            const resp = await fetch("/api/check_admin?pw=" + encodeURIComponent(pwd));
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.success) {
+                    adminPass = pwd; // Salva a senha para usar na gravação de voz se necessário (futuro)
+                    document.getElementById('authSection').classList.add('hidden');
+                    document.getElementById('adminPanel').classList.remove('hidden');
+                    initVoice();
+                } else {
+                    document.getElementById('authError').style.display = "block";
+                }
+            } else {
+                document.getElementById('authError').style.display = "block";
+            }
+        }
+
+        function initVoice() {
+            let mediaRecorder;
+            let audioChunks = [];
+            const recordBtn = document.getElementById('recordBtn');
+            const statusText = document.getElementById('status');
+            const logBox = document.getElementById('logBox');
+
+            function appendLog(speaker, text, cls) {
+                const time = new Date().toLocaleTimeString();
+                logBox.innerHTML += `<div>[${time}] <span class="${cls}"><b>${speaker}:</b></span> ${text}</div>`;
+                logBox.scrollTop = logBox.scrollHeight;
+            }
+
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = e => {
+                    audioChunks.push(e.data);
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    audioChunks = [];
+                    statusText.innerText = "Processando áudio via Admin...";
+                    recordBtn.disabled = true;
+                    
+                    const formData = new FormData();
+                    formData.append("file", audioBlob, "voice.webm");
+                    // (Opcional) Podemos mandar adminPass se em algum momento restringirmos uploads no backend!
+
+                    try {
+                        const response = await fetch('/audio/upload', { method: 'POST', body: formData });
+                        const result = await response.json();
+                        
+                        if (response.ok && result.transcription) {
+                            statusText.innerText = "Respondido!";
+                            appendLog("Admin", result.transcription, "user-text");
+                            appendLog("Neuro", result.reply, "bot-text");
+                        } else {
+                            statusText.innerText = "Erro: " + (result.message || "Falha na resposta.");
+                        }
+                    } catch (err) {
+                        statusText.innerText = "Erro de conexão com o servidor.";
+                    }
+                    
+                    recordBtn.disabled = false;
+                };
+            }).catch(err => {
+                statusText.innerText = "Erro ao acessar microfone. Verifique as permissões do navegador.";
+                recordBtn.disabled = true;
+            });
+
+            const startRecording = (e) => {
+                if (e) e.preventDefault();
+                if (mediaRecorder && mediaRecorder.state === "inactive") {
+                    mediaRecorder.start();
+                    recordBtn.style.backgroundColor = "#f04747";
+                    recordBtn.innerText = "Gravando... (Solte para enviar)";
+                    statusText.innerText = "Ouvindo...";
+                }
+            };
+
+            const stopRecording = (e) => {
+                if (e) e.preventDefault();
+                if (mediaRecorder && mediaRecorder.state === "recording") {
+                    mediaRecorder.stop();
+                    recordBtn.style.backgroundColor = "#7289da";
+                    recordBtn.innerText = "Segure para Falar";
+                }
+            };
+
+            recordBtn.addEventListener('mousedown', startRecording);
+            recordBtn.addEventListener('mouseup', stopRecording);
+            recordBtn.addEventListener('mouseleave', stopRecording);
+            recordBtn.addEventListener('touchstart', startRecording);
+            recordBtn.addEventListener('touchend', stopRecording);
+            recordBtn.addEventListener('touchcancel', stopRecording);
+        }
+    </script>
+</body>
+</html>
