@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field
 
 class AppConfig(BaseModel):
     name: str = "Neuro"
+    description: str = ""
+    personality: str = ""
     wake_word: str = "Neuro"
     language: str = "pt"
     
