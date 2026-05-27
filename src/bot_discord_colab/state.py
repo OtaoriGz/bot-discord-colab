@@ -1,5 +1,6 @@
-﻿import time
+import time
 import asyncio
+import threading
 from typing import Dict, List, Set, Any, Optional
 from pydantic import BaseModel, Field
 
@@ -35,14 +36,14 @@ class CentralState:
         
         self.last_message_time: float = time.time()
         self.event_queue: Optional[asyncio.Queue[BotEvent]] = None
-        self._lock = asyncio.Lock()
+        self._lock = threading.Lock()
 
     def init_queue(self):
         if self.event_queue is None:
             self.event_queue = asyncio.Queue()
 
     async def update_speaking_state(self, is_speaking: bool, source: str = "human"):
-        async with self._lock:
+        with self._lock:
             if source == "human":
                 self.human_speaking = is_speaking
             elif source == "bot":
@@ -50,17 +51,17 @@ class CentralState:
             self.last_message_time = time.time()
 
     async def set_active_voice_channel(self, channel_id: Optional[int]):
-        async with self._lock:
+        with self._lock:
             self.active_voice_channel = channel_id
             
     async def add_speaker(self, user_id: int):
-        async with self._lock:
+        with self._lock:
             self.current_speakers.add(user_id)
             self.human_speaking = True
             self.last_message_time = time.time()
 
     async def remove_speaker(self, user_id: int):
-        async with self._lock:
+        with self._lock:
             self.current_speakers.discard(user_id)
             if not self.current_speakers:
                 self.human_speaking = False
@@ -68,7 +69,7 @@ class CentralState:
 
     async def add_transcript(self, user_id: int, username: str, text: str):
         item = TranscriptItem(user_id=user_id, username=username, text=text)
-        async with self._lock:
+        with self._lock:
             self.recent_transcripts.append(item)
             if len(self.recent_transcripts) > 50:
                 self.recent_transcripts.pop(0)
@@ -76,7 +77,7 @@ class CentralState:
 
     async def add_response(self, text: str):
         item = ResponseItem(text=text)
-        async with self._lock:
+        with self._lock:
             self.recent_responses.append(item)
             if len(self.recent_responses) > 50:
                 self.recent_responses.pop(0)

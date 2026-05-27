@@ -1,5 +1,6 @@
-﻿import os
+import os
 import yaml
+from typing import Optional
 from pydantic import BaseModel, Field
 
 class AppConfig(BaseModel):
@@ -18,6 +19,7 @@ class AppConfig(BaseModel):
     volume: float = 1.0
     silence_timeout: int = 300
     voice_reference: str = "voices/reference.wav"
+    active_voice_channel_id: Optional[int] = None
 
 def load_config() -> AppConfig:
     data = {}

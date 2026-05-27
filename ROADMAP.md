@@ -319,14 +319,14 @@ Objetivo: gerar respostas curtas, naturais e em PT-BR.
 
 Tarefas:
 
-1. Criar cliente LLM abstrato:
+1. [x] Criar cliente LLM abstrato:
    - API externa OpenAI-compatible.
    - configuracao por `.env`.
    - metodo `generate_reply(context)`.
 
    Dificuldade: Media.
 
-2. Criar `prompt_builder.py` por camadas:
+2. [x] Criar prompt builder (implementado em llm.py):
    - persona fixa.
    - configuracoes da call.
    - historico recente.
@@ -336,15 +336,15 @@ Tarefas:
 
    Dificuldade: Media.
 
-3. Forcar PT-BR no prompt:
+3. [x] Forcar PT-BR no prompt:
    - "Responda sempre em portugues do Brasil."
    - "Use fala natural de chamada de voz."
    - "Nao responda em ingles."
 
    Dificuldade: Facil.
 
-4. Criar regras de fala:
-   - maximo 1 ou 2 frases.
+4. [x] Criar regras de fala:
+   - maximo 1 or 2 frases.
    - evitar monologos.
    - nao inventar falas de membros.
    - nao interromper usuarios.
@@ -352,7 +352,7 @@ Tarefas:
 
    Dificuldade: Facil.
 
-5. Criar gatilhos de resposta:
+5. [x] Criar gatilhos de resposta:
    - wake word.
    - pergunta direta.
    - mencao ao nome do bot.

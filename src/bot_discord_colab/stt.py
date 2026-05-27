@@ -1,13 +1,12 @@
-from faster_whisper import WhisperModel
 import os
-
-import torch
 
 model = None
 
 def get_stt_model():
     global model
     if model is None:
+        from faster_whisper import WhisperModel
+        import torch
         print("Carregando modelo STT (faster-whisper)...")
         device = "cuda" if torch.cuda.is_available() else "cpu"
         compute = "float16" if device == "cuda" else "int8"
