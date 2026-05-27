@@ -1,218 +1,591 @@
-﻿<!DOCTYPE html>
-
+<!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Neuro - Painel de Voz</title>
-
-    <style>
-
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin-top: 50px; background-color: #2c2f33; color: white; }
-
-        button { padding: 20px 40px; font-size: 20px; border-radius: 10px; cursor: pointer; border: none; background-color: #7289da; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: background-color 0.2s; }
-
-        button:active { background-color: #5b6eae; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transform: translateY(2px); }
-
-        button:disabled { background-color: #99aab5; cursor: not-allowed; }
-
-        #status { margin-top: 20px; font-size: 18px; color: #99aab5; }
-
-        .log-container { margin: 20px auto; width: 80%; max-width: 600px; background-color: #23272a; padding: 15px; border-radius: 8px; text-align: left; font-size: 14px; min-height: 100px; max-height: 300px; overflow-y: auto; color: #ccc; }
-
-        .user-text { color: #43b581; }
-
-        .bot-text { color: #faa61a; }
-
-        .nav { margin-bottom: 30px; }
-
-        .nav a { color: #7289da; text-decoration: none; }
-
-    </style>
-
-</head>
-
-<body>
-
-    <div class="nav"><a href="/">&larr; Voltar ao Início</a></div>
-
-    <h1>Microfone via Web</h1>
-
-    <p>Segure o botão abaixo para falar com o bot.</p>
-
+    <title>Otaori - Canal de Voz</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     
-
-    <button id="recordBtn">Segure para Falar</button>
-
-    <p id="status">Pronto para gravar.</p>
-
-
-
-    <div class="log-container" id="logBox"></div>
-
-
-
-    <script>
-
-        let mediaRecorder;
-
-        let audioChunks = [];
-
-        const recordBtn = document.getElementById('recordBtn');
-
-        const statusText = document.getElementById('status');
-
-        const logBox = document.getElementById('logBox');
-
-
-
-        function appendLog(speaker, text, cls) {
-
-            const time = new Date().toLocaleTimeString();
-
-            logBox.innerHTML += `<div>[${time}] <span class="${cls}"><b>${speaker}:</b></span> ${text}</div>`;
-
-            logBox.scrollTop = logBox.scrollHeight;
-
+    <style>
+        :root {
+            --bg-color: #0b0c10;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary-glow: rgba(138, 43, 226, 0.15);
+            --secondary-glow: rgba(0, 210, 255, 0.15);
+            
+            --bot-bubble: rgba(138, 43, 226, 0.2);
+            --bot-border: rgba(138, 43, 226, 0.4);
+            --user-bubble: rgba(0, 210, 255, 0.2);
+            --user-border: rgba(0, 210, 255, 0.4);
+            
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+            --font-title: 'Outfit', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
         }
 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 5% 50%, var(--primary-glow) 0%, transparent 40%),
+                radial-gradient(circle at 95% 50%, var(--secondary-glow) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 20px;
+        }
 
-        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        .nav-back {
+            align-self: flex-start;
+            margin-bottom: 20px;
+            max-width: 1000px;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+        }
 
-            mediaRecorder = new MediaRecorder(stream);
+        .nav-back a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
 
-            
+        .nav-back a:hover {
+            color: #00d2ff;
+        }
 
-            mediaRecorder.ondataavailable = e => {
+        .main-container {
+            max-width: 900px;
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 120px);
+            min-height: 500px;
+            overflow: hidden;
+            position: relative;
+        }
 
-                audioChunks.push(e.data);
+        .chat-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.2);
+        }
 
+        .bot-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #8a2be2 0%, #00d2ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 0 15px rgba(138, 43, 226, 0.4);
+        }
+
+        .bot-meta h2 {
+            font-family: var(--font-title);
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .bot-status {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 2px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #9ca3af;
+            display: inline-block;
+            box-shadow: 0 0 8px rgba(156, 163, 175, 0.5);
+            transition: all 0.3s;
+        }
+
+        .status-dot.online {
+            background-color: #10b981;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.7);
+        }
+
+        .status-dot.thinking {
+            background-color: #f59e0b;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
+            animation: pulse-glow 1s infinite alternate;
+        }
+
+        .status-dot.speaking {
+            background-color: #3b82f6;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.7);
+            animation: pulse-glow 1s infinite alternate;
+        }
+
+        @keyframes pulse-glow {
+            from { transform: scale(1); opacity: 0.7; }
+            to { transform: scale(1.2); opacity: 1; }
+        }
+
+        /* Área de Mensagens */
+        .chat-body {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+        }
+
+        .chat-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 15px 20px;
+            border-radius: 18px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            position: relative;
+            animation: messageFadeIn 0.3s ease-out;
+        }
+
+        @keyframes messageFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-user {
+            align-self: flex-end;
+            background: var(--user-bubble);
+            border: 1px solid var(--user-border);
+            color: #e0f7fa;
+            border-bottom-right-radius: 4px;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.05);
+        }
+
+        .message-bot {
+            align-self: flex-start;
+            background: var(--bot-bubble);
+            border: 1px solid var(--bot-border);
+            color: #f3e5f5;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.05);
+        }
+
+        .msg-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .msg-author {
+            font-weight: 600;
+            margin-right: 15px;
+        }
+
+        /* Rodapé com controle de voz */
+        .chat-footer {
+            padding: 25px;
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.15);
+            gap: 15px;
+        }
+
+        .mic-button-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .record-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d2ff 0%, #0083b0 100%);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            box-shadow: 0 8px 25px rgba(0, 210, 255, 0.3);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 2;
+        }
+
+        .record-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(0, 210, 255, 0.5);
+        }
+
+        .record-btn:active {
+            transform: scale(0.95);
+        }
+
+        .record-btn:disabled {
+            background: #4b5563 !important;
+            box-shadow: none !important;
+            cursor: not-allowed;
+        }
+
+        .record-btn.recording {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 8px 30px rgba(239, 68, 68, 0.6);
+            animation: pulse-record 1.5s infinite;
+        }
+
+        @keyframes pulse-record {
+            0% { box-shadow: 0 8px 30px rgba(239, 68, 68, 0.6); }
+            50% { box-shadow: 0 8px 45px rgba(239, 68, 68, 0.9); }
+            100% { box-shadow: 0 8px 30px rgba(239, 68, 68, 0.6); }
+        }
+
+        .pulse-ring {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 210, 255, 0.4);
+            animation: pulse-ring-anim 1.5s infinite;
+            z-index: 1;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s;
+        }
+
+        .record-btn.recording ~ .pulse-ring {
+            border-color: rgba(239, 68, 68, 0.4);
+            opacity: 1;
+        }
+
+        @keyframes pulse-ring-anim {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+
+        .info-status-text {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* Onda de áudio interativa */
+        .wave-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 24px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .wave-container.active {
+            opacity: 1;
+        }
+
+        .wave-bar {
+            width: 3px;
+            height: 5px;
+            background-color: #00d2ff;
+            border-radius: 2px;
+            animation: bounce-wave 0.8s infinite ease-in-out alternate;
+        }
+
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; background-color: #3b82f6; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; background-color: #8a2be2; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; background-color: #00d2ff; }
+        .wave-bar:nth-child(5) { animation-delay: 0.4s; background-color: #8a2be2; }
+
+        @keyframes bounce-wave {
+            0% { height: 5px; }
+            100% { height: 25px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-back">
+        <a href="/">&larr; Painel Principal</a>
+    </div>
+
+    <div class="main-container">
+        <!-- Header -->
+        <header class="chat-header">
+            <div class="bot-info">
+                <div class="avatar">🤖</div>
+                <div class="bot-meta">
+                    <h2 id="botName">Otaori AI</h2>
+                    <div class="bot-status">
+                        <span id="statusDot" class="status-dot online"></span>
+                        <span id="statusText">Conectando...</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Body -->
+        <div class="chat-body" id="chatBox">
+            <div class="message message-bot">
+                Olá! Eu sou o Otaori. Como posso ajudar você hoje? Segure o microfone abaixo para falar diretamente comigo!
+                <div class="msg-meta">
+                    <span class="msg-author">Otaori AI</span>
+                    <span class="msg-time">Agora</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Waveform Anim -->
+        <div class="wave-container" id="waveContainer">
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="chat-footer">
+            <div class="mic-button-wrapper">
+                <button class="record-btn" id="recordBtn">🎙️</button>
+                <div class="pulse-ring"></div>
+            </div>
+            <div class="info-status-text" id="infoText">Clique e segure para falar</div>
+        </footer>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chatBox');
+        const recordBtn = document.getElementById('recordBtn');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const infoText = document.getElementById('infoText');
+        const waveContainer = document.getElementById('waveContainer');
+        const botName = document.getElementById('botName');
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let displayedMessages = new Set(); // Guarda chaves únicas para evitar duplicação
+
+        // 1. WebSocket de sincronização
+        function initWebSocket() {
+            const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${proto}//${window.location.host}/ws/status`;
+            const ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                statusDot.className = 'status-dot online';
+                statusText.innerText = 'Online';
             };
 
-            
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const state = data.state;
+                if (!state) return;
 
-            mediaRecorder.onstop = async () => {
-
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-
-                audioChunks = [];
-
-                statusText.innerText = "Processando áudio...";
-
-                recordBtn.disabled = true;
-
-                
-
-                const formData = new FormData();
-
-                formData.append("file", audioBlob, "voice.webm");
-
-
-
-                try {
-
-                    const response = await fetch('/audio/upload', { method: 'POST', body: formData });
-
-                    const result = await response.json();
-
-                    
-
-                    if (response.ok && result.transcription) {
-
-                        statusText.innerText = "Respondido!";
-
-                        appendLog("Você", result.transcription, "user-text");
-
-                        appendLog("Neuro", result.reply, "bot-text");
-
-                    } else {
-
-                        statusText.innerText = "Erro: " + (result.message || "Falha na resposta.");
-
-                    }
-
-                } catch (err) {
-
-                    statusText.innerText = "Erro de conexão com o servidor.";
-
+                // Atualiza status dot & texto de acordo com estado do bot
+                if (state.bot_thinking) {
+                    statusDot.className = 'status-dot thinking';
+                    statusText.innerText = 'Pensando...';
+                } else if (state.bot_speaking) {
+                    statusDot.className = 'status-dot speaking';
+                    statusText.innerText = 'Falando no Discord';
+                } else {
+                    statusDot.className = 'status-dot online';
+                    statusText.innerText = 'Online';
                 }
 
-                
+                // Carrega mensagens e mescla mantendo a ordem temporal
+                const transcripts = state.recent_transcripts || [];
+                const responses = state.recent_responses || [];
 
-                recordBtn.disabled = false;
+                let allMessages = [];
+                transcripts.forEach(t => {
+                    allMessages.push({
+                        type: 'user',
+                        username: t.username,
+                        text: t.text,
+                        timestamp: t.timestamp
+                    });
+                });
 
+                responses.forEach(r => {
+                    allMessages.push({
+                        type: 'bot',
+                        username: 'Otaori AI',
+                        text: r.text,
+                        timestamp: r.timestamp
+                    });
+                });
+
+                // Ordena por timestamp
+                allMessages.sort((a, b) => a.timestamp - b.timestamp);
+
+                // Renderiza novas mensagens
+                let hasNew = false;
+                allMessages.forEach(msg => {
+                    const key = `${msg.type}_${msg.timestamp}_${msg.text.substring(0, 15)}`;
+                    if (!displayedMessages.has(key)) {
+                        displayedMessages.add(key);
+                        appendMessageMarkup(msg);
+                        hasNew = true;
+                    }
+                });
+
+                if (hasNew) {
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
             };
 
+            ws.onclose = () => {
+                statusDot.className = 'status-dot';
+                statusText.innerText = 'Desconectado (Reconectando...)';
+                setTimeout(initWebSocket, 2000);
+            };
+        }
+
+        function appendMessageMarkup(msg) {
+            const timeStr = new Date(msg.timestamp * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const bubble = document.createElement('div');
+            bubble.className = `message message-${msg.type === 'user' ? 'user' : 'bot'}`;
+            bubble.innerHTML = `
+                ${msg.text}
+                <div class="msg-meta">
+                    <span class="msg-author">${msg.username}</span>
+                    <span class="msg-time">${timeStr}</span>
+                </div>
+            `;
+            chatBox.appendChild(bubble);
+        }
+
+        // 2. Captura do Microfone
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+            mediaRecorder = new MediaRecorder(stream);
+            
+            mediaRecorder.ondataavailable = e => {
+                audioChunks.push(e.data);
+            };
+            
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                audioChunks = [];
+                
+                infoText.innerText = "Processando áudio via STT...";
+                recordBtn.disabled = true;
+                waveContainer.classList.remove('active');
+                
+                const formData = new FormData();
+                formData.append("file", audioBlob, "voice.webm");
+                formData.append("username", "WebUser");
+
+                try {
+                    const response = await fetch('/audio/upload', { method: 'POST', body: formData });
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        infoText.innerText = "Enviado! Bot respondendo na call.";
+                    } else {
+                        infoText.innerText = "Erro no envio: " + (result.message || "tente de novo");
+                    }
+                } catch (err) {
+                    infoText.innerText = "Erro ao conectar com o servidor.";
+                }
+                
+                recordBtn.disabled = false;
+                setTimeout(() => {
+                    if (!recordBtn.classList.contains('recording')) {
+                        infoText.innerText = "Clique e segure para falar";
+                    }
+                }, 3000);
+            };
         }).catch(err => {
-
-            statusText.innerText = "Erro ao acessar microfone. Verifique as permissões do navegador.";
-
+            infoText.innerText = "Permissão do microfone negada ou erro de acesso.";
             recordBtn.disabled = true;
-
         });
 
-
-
+        // 3. Eventos do Botão
         const startRecording = (e) => {
-
             if (e) e.preventDefault();
-
             if (mediaRecorder && mediaRecorder.state === "inactive") {
-
+                audioChunks = [];
                 mediaRecorder.start();
-
-                recordBtn.style.backgroundColor = "#f04747";
-
-                recordBtn.innerText = "Gravando... (Solte para enviar)";
-
-                statusText.innerText = "Ouvindo...";
-
+                recordBtn.classList.add('recording');
+                waveContainer.classList.add('active');
+                infoText.innerText = "Gravando... Solte para enviar";
             }
-
         };
-
-
 
         const stopRecording = (e) => {
-
             if (e) e.preventDefault();
-
             if (mediaRecorder && mediaRecorder.state === "recording") {
-
                 mediaRecorder.stop();
-
-                recordBtn.style.backgroundColor = "#7289da";
-
-                recordBtn.innerText = "Segure para Falar";
-
+                recordBtn.classList.remove('recording');
             }
-
         };
 
-
-
         recordBtn.addEventListener('mousedown', startRecording);
-
         recordBtn.addEventListener('mouseup', stopRecording);
-
         recordBtn.addEventListener('mouseleave', stopRecording);
-
         
-
         recordBtn.addEventListener('touchstart', startRecording);
-
         recordBtn.addEventListener('touchend', stopRecording);
-
         recordBtn.addEventListener('touchcancel', stopRecording);
 
+        // Inicializa o WebSocket
+        initWebSocket();
     </script>
-
 </body>
-
 </html>
-

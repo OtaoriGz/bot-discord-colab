@@ -1,21 +1,295 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Neuro - Início</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Otaori - Central de Controle</title>
+    <!-- Import Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    
     <style>
-        body { font-family: Segoe UI, sans-serif; text-align: center; margin-top: 100px; background-color: #2c2f33; color: white; }
-        .btn { padding: 15px 30px; font-size: 18px; border-radius: 8px; cursor: pointer; border: none; color: white; display: block; margin: 20px auto; width: 300px; text-decoration: none; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: background-color 0.2s; }
-        .btn-user { background-color: #7289da; }
-        .btn-user:hover { background-color: #5b6eae; }
-        .btn-admin { background-color: #f04747; }
-        .btn-admin:hover { background-color: #d83c3e; }
+        :root {
+            --bg-color: #0b0c10;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary-glow: rgba(138, 43, 226, 0.4);
+            --secondary-glow: rgba(0, 210, 255, 0.4);
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+            --font-title: 'Outfit', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, var(--primary-glow) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, var(--secondary-glow) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+            z-index: 10;
+        }
+
+        .header {
+            margin-bottom: 50px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-family: var(--font-title);
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff 30%, #8a2be2 70%, #00d2ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @media (max-width: 768px) {
+            .cards-container {
+                grid-template-columns: 1fr;
+            }
+            .header h1 {
+                font-size: 2.5rem;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-decoration: none;
+            color: var(--text-color);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.15) 0%, rgba(0, 210, 255, 0.15) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 1;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(138, 43, 226, 0.25);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+        }
+
+        .icon-box {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            font-size: 2.2rem;
+            transition: transform 0.4s ease;
+        }
+
+        .card:hover .icon-box {
+            transform: scale(1.15) rotate(5deg);
+        }
+
+        .user-icon {
+            background: linear-gradient(135deg, rgba(0, 210, 255, 0.2) 0%, rgba(0, 210, 255, 0.05) 100%);
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            color: #00d2ff;
+            text-shadow: 0 0 10px rgba(0, 210, 255, 0.5);
+        }
+
+        .admin-icon {
+            background: linear-gradient(135deg, rgba(138, 43, 226, 0.2) 0%, rgba(138, 43, 226, 0.05) 100%);
+            border: 1px solid rgba(138, 43, 226, 0.3);
+            color: #a855f7;
+            text-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+        }
+
+        .card h2 {
+            font-family: var(--font-title);
+            font-size: 1.6rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 30px;
+            flex-grow: 1;
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 14px 28px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-user {
+            background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 180, 219, 0.3);
+        }
+
+        .btn-user:hover {
+            box-shadow: 0 6px 20px rgba(0, 180, 219, 0.5);
+        }
+
+        .btn-admin {
+            background: linear-gradient(135deg, #8a2be2 0%, #4a00e0 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.3);
+        }
+
+        .btn-admin:hover {
+            box-shadow: 0 6px 20px rgba(138, 43, 226, 0.5);
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .footer {
+            margin-top: 80px;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.2);
+            animation: fadeInUp 1s ease-out;
+        }
     </style>
 </head>
 <body>
-    <h1>Bem-vindo ao Painel do Bot</h1>
-    <p>Escolha como deseja se conectar com o Neuro:</p>
-    <a href="/user" class="btn btn-user">Entrar como Usuário (Falar no Mic)</a>
-    <a href="/admin" class="btn btn-admin">Painel de Administração</a>
+    <div class="container">
+        <header class="header">
+            <h1>Otaori Bot</h1>
+            <p>O robô inteligente de conversa por voz integrado diretamente no seu canal do Discord e orquestrado em tempo real.</p>
+        </header>
+
+        <main class="cards-container">
+            <!-- Painel Público do Usuário -->
+            <a href="/user" class="card">
+                <div class="card-content">
+                    <div class="icon-box user-icon">
+                        🎙️
+                    </div>
+                    <h2>Portal de Usuário</h2>
+                    <p>Fale diretamente com o bot usando o microfone do seu navegador. O bot processará sua voz e responderá na chamada de voz do Discord ativa.</p>
+                    <button class="btn-action btn-user">Conectar Microfone &rarr;</button>
+                </div>
+            </a>
+
+            <!-- Painel do Administrador -->
+            <a href="/admin" class="card">
+                <div class="card-content">
+                    <div class="icon-box admin-icon">
+                        ⚙️
+                    </div>
+                    <h2>Painel de Controle</h2>
+                    <p>Gerencie o bot do Discord, visualize status técnicos, mude de canal, ative/desative recursos, altere a persona da IA e suba novas vozes de referência.</p>
+                    <button class="btn-action btn-admin">Acessar Admin &rarr;</button>
+                </div>
+            </a>
+        </main>
+
+        <footer class="footer">
+            &copy; 2026 Otaori Discord Bot. Desenvolvido para execução em Google Colab.
+        </footer>
+    </div>
 </body>
 </html>

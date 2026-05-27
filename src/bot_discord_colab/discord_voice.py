@@ -61,6 +61,9 @@ class DiscordVoiceBot:
         @bot.event
         async def on_ready():
             print(f"Discord bot online as {bot.user}")
+            if hasattr(self, 'orchestrator') and self.orchestrator:
+                print("[Discord Bot] Iniciando o ConversationOrchestrator no loop do Discord...")
+                asyncio.create_task(self.orchestrator.start())
 
         @bot.slash_command(name="status", description="Mostra o status atual do bot.")
         async def status(ctx):

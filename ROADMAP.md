@@ -387,36 +387,36 @@ audio da call
 
 Tarefas:
 
-1. Criar orquestrador da conversa.
+1. [x] Criar orquestrador da conversa.
 
    Dificuldade: Dificil.
 
-2. Impedir sobreposicao:
+2. [x] Impedir sobreposicao:
    - nao responder se humano esta falando.
    - nao gerar nova resposta se bot esta falando.
    - permitir cancelar resposta.
 
    Dificuldade: Dificil.
 
-3. Criar "patience loop":
+3. [x] Criar "patience loop":
    - se passar X segundos sem fala, bot pode falar.
    - configuravel no painel.
    - desligavel.
 
    Dificuldade: Media.
 
-4. Criar historico de call:
+4. [x] Criar historico de call:
    - ultimas N transcricoes.
    - ultimas N respostas.
    - nomes dos membros.
 
    Dificuldade: Media.
 
-5. Testar com 1 pessoa.
+5. [x] Testar com 1 pessoa.
 
    Dificuldade: Dificil.
 
-6. Testar com mais de 1 pessoa.
+6. [x] Testar com mais de 1 pessoa.
 
    Dificuldade: Critica.
 
@@ -438,11 +438,11 @@ Objetivo: criar interface de configuracao e monitoramento.
 
 Tarefas:
 
-1. Criar backend `FastAPI`.
+1. [x] Criar backend `FastAPI`.
 
    Dificuldade: Media.
 
-2. Criar pagina inicial do painel:
+2. [x] Criar pagina inicial do painel:
    - status do bot.
    - status Discord.
    - status STT.
@@ -451,7 +451,7 @@ Tarefas:
 
    Dificuldade: Media.
 
-3. Criar WebSocket para eventos ao vivo:
+3. [x] Criar WebSocket para eventos ao vivo:
    - transcricoes.
    - resposta atual.
    - bot pensando.
@@ -460,7 +460,7 @@ Tarefas:
 
    Dificuldade: Dificil.
 
-4. Criar controles:
+4. [x] Criar controles:
    - entrar/sair da call.
    - ativar/desativar STT.
    - ativar/desativar TTS.
@@ -471,7 +471,7 @@ Tarefas:
 
    Dificuldade: Media.
 
-5. Criar edicao de persona:
+5. [x] Criar edicao de persona:
    - nome.
    - descricao.
    - personalidade.
@@ -480,7 +480,7 @@ Tarefas:
 
    Dificuldade: Media.
 
-6. Criar upload/configuracao de voz:
+6. [x] Criar upload/configuracao de voz:
    - arquivo `.wav` de referencia.
    - teste de frase.
    - volume.

@@ -2,9 +2,12 @@ import os
 import tempfile
 import threading
 import asyncio
+import yaml
+import json
 from pathlib import Path
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pyngrok import ngrok
 import uvicorn
 
@@ -13,6 +16,12 @@ from .stt import transcribe_audio
 app = FastAPI()
 bot_instance = None
 public_url = ""
+active_connections = []
+
+# Criar pasta estática caso não exista
+static_dir = Path("web/static")
+static_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory="web/static"), name="static")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -106,6 +115,219 @@ async def upload_audio(file: UploadFile = File(...), username: str = Form("WebUs
     finally:
         if os.path.exists(temp_path):
             os.unlink(temp_path)
+
+@app.websocket("/ws/status")
+async def websocket_status(websocket: WebSocket):
+    await websocket.accept()
+    active_connections.append(websocket)
+    try:
+        while True:
+            summary = {}
+            if bot_instance and bot_instance.state:
+                summary = bot_instance.state.get_summary()
+            await websocket.send_json({
+                "ngrok_url": public_url,
+                "status": "online",
+                "state": summary
+            })
+            await asyncio.sleep(0.5)
+    except WebSocketDisconnect:
+        if websocket in active_connections:
+            active_connections.remove(websocket)
+    except Exception as e:
+        print(f"[Painel WS] Erro: {e}")
+        if websocket in active_connections:
+            active_connections.remove(websocket)
+
+@app.post("/api/control/join")
+async def join_channel(channel_id: Optional[int] = None):
+    if not bot_instance:
+        return {"success": False, "message": "Bot não inicializado."}
+    
+    async def _do_join():
+        discord, commands = bot_instance._require_discord()
+        channel = None
+        if channel_id:
+            channel = bot_instance.bot.get_channel(channel_id)
+        
+        if not channel and bot_instance.config.active_voice_channel_id:
+            channel = bot_instance.bot.get_channel(bot_instance.config.active_voice_channel_id)
+            
+        if not channel:
+            for guild in bot_instance.bot.guilds:
+                for vc in guild.voice_channels:
+                    channel = vc
+                    break
+                if channel:
+                    break
+        
+        if not channel:
+            return {"success": False, "message": "Nenhum canal de voz encontrado."}
+            
+        guild_id = channel.guild.id
+        existing = await bot_instance._get_voice_client(guild_id)
+        if existing and existing.is_connected():
+            await existing.move_to(channel)
+            voice_client = existing
+        else:
+            voice_client = await channel.connect()
+            
+        bot_instance.voice_clients[guild_id] = voice_client
+        await bot_instance.state.set_active_voice_channel(channel.id)
+        return {"success": True, "message": f"Conectado ao canal {channel.name}"}
+
+    try:
+        if bot_instance.bot and bot_instance.bot.loop:
+            fut = asyncio.run_coroutine_threadsafe(_do_join(), bot_instance.bot.loop)
+            return fut.result(timeout=10.0)
+        else:
+            return await _do_join()
+    except Exception as e:
+        return {"success": False, "message": f"Erro ao conectar: {str(e)}"}
+
+@app.post("/api/control/leave")
+async def leave_channel():
+    if not bot_instance:
+        return {"success": False, "message": "Bot não inicializado."}
+    
+    async def _do_leave():
+        active_channel_id = bot_instance.state.active_voice_channel
+        if not active_channel_id:
+            return {"success": False, "message": "O bot não está em nenhuma call."}
+            
+        for guild_id, voice_client in list(bot_instance.voice_clients.items()):
+            if voice_client.channel.id == active_channel_id:
+                await bot_instance._disconnect_guild(guild_id)
+                return {"success": True, "message": "Desconectado da chamada de voz."}
+        return {"success": False, "message": "Conexão de áudio ativa não encontrada."}
+
+    try:
+        if bot_instance.bot and bot_instance.bot.loop:
+            fut = asyncio.run_coroutine_threadsafe(_do_leave(), bot_instance.bot.loop)
+            return fut.result(timeout=10.0)
+        else:
+            return await _do_leave()
+    except Exception as e:
+        return {"success": False, "message": f"Erro ao desconectar: {str(e)}"}
+
+@app.post("/api/control/toggle_feature")
+async def toggle_feature(feature: str, enabled: bool):
+    if not bot_instance or not bot_instance.state:
+        return {"success": False, "message": "Estado não disponível."}
+        
+    if feature == "stt":
+        await bot_instance.state.set_stt_enabled(enabled)
+    elif feature == "tts":
+        await bot_instance.state.set_tts_enabled(enabled)
+    elif feature == "auto_respond":
+        await bot_instance.state.set_auto_respond(enabled)
+    else:
+        return {"success": False, "message": f"Feature desconhecida: {feature}"}
+        
+    return {"success": True, "message": f"Feature '{feature}' configurada para {enabled}."}
+
+@app.post("/api/control/clear_history")
+async def clear_history():
+    if not bot_instance or not bot_instance.state:
+        return {"success": False, "message": "Estado não disponível."}
+        
+    with bot_instance.state._lock:
+        bot_instance.state.recent_transcripts.clear()
+        bot_instance.state.recent_responses.clear()
+        
+    return {"success": True, "message": "Histórico de conversas limpo."}
+
+@app.get("/api/config")
+def get_config():
+    try:
+        profile_path = Path("config/bot_profile.yaml")
+        settings_path = Path("config/settings.yaml")
+        
+        profile = yaml.safe_load(profile_path.read_text(encoding="utf-8")) if profile_path.exists() else {}
+        settings = yaml.safe_load(settings_path.read_text(encoding="utf-8")) if settings_path.exists() else {}
+        
+        return {
+            "success": True,
+            "profile": profile,
+            "settings": settings
+        }
+    except Exception as e:
+        return {"success": False, "message": f"Erro ao ler configurações: {str(e)}"}
+
+@app.post("/api/config/update")
+async def update_config(data: dict):
+    if not bot_instance or not bot_instance.config:
+        return {"success": False, "message": "Bot não configurado."}
+        
+    try:
+        profile_data = data.get("profile")
+        settings_data = data.get("settings")
+        
+        if profile_data:
+            profile_path = Path("config/bot_profile.yaml")
+            profile_path.write_text(yaml.dump(profile_data, allow_unicode=True, default_flow_style=False), encoding="utf-8")
+            
+        if settings_data:
+            settings_path = Path("config/settings.yaml")
+            settings_path.write_text(yaml.dump(settings_data, allow_unicode=True, default_flow_style=False), encoding="utf-8")
+            
+        from .config import load_config
+        new_config = load_config()
+        
+        bot_instance.config = new_config
+        if hasattr(bot_instance, 'orchestrator') and bot_instance.orchestrator:
+            bot_instance.orchestrator.config = new_config
+            if bot_instance.orchestrator.tts_mgr:
+                bot_instance.orchestrator.tts_mgr.config = new_config
+                
+        return {"success": True, "message": "Configurações atualizadas e recarregadas com sucesso!"}
+    except Exception as e:
+        return {"success": False, "message": f"Erro ao atualizar configurações: {str(e)}"}
+
+@app.post("/api/voice/upload")
+async def voice_upload(file: UploadFile = File(...)):
+    if not bot_instance:
+        return {"success": False, "message": "Bot não inicializado."}
+        
+    try:
+        voices_dir = Path("voices")
+        voices_dir.mkdir(parents=True, exist_ok=True)
+        
+        file_path = voices_dir / file.filename
+        content = await file.read()
+        file_path.write_bytes(content)
+        
+        settings_path = Path("config/settings.yaml")
+        settings = yaml.safe_load(settings_path.read_text(encoding="utf-8")) if settings_path.exists() else {}
+        settings["voice_reference"] = str(file_path.as_posix())
+        
+        settings_path.write_text(yaml.dump(settings, allow_unicode=True, default_flow_style=False), encoding="utf-8")
+        
+        from .config import load_config
+        bot_instance.config = load_config()
+        if hasattr(bot_instance, 'orchestrator') and bot_instance.orchestrator:
+            bot_instance.orchestrator.config = bot_instance.config
+            if bot_instance.orchestrator.tts_mgr:
+                bot_instance.orchestrator.tts_mgr.config = bot_instance.config
+                
+        return {"success": True, "filename": file.filename, "message": f"Voz de referência alterada para {file.filename}"}
+    except Exception as e:
+        return {"success": False, "message": f"Erro ao fazer upload de voz: {str(e)}"}
+
+@app.post("/api/voice/test")
+async def voice_test(text: str = Form(...)):
+    if not bot_instance or not hasattr(bot_instance, 'orchestrator') or not bot_instance.orchestrator or not bot_instance.orchestrator.tts_mgr:
+        return {"success": False, "message": "TTSManager não inicializado no bot."}
+        
+    try:
+        test_file_path = static_dir / "tts_test.wav"
+        tts_path = await bot_instance.orchestrator.tts_mgr.generate_speech(text, str(test_file_path))
+        if tts_path:
+            return {"success": True, "audio_url": "/static/tts_test.wav", "message": "Fala de teste gerada!"}
+        else:
+            return {"success": False, "message": "Falha na síntese de áudio de teste."}
+    except Exception as e:
+        return {"success": False, "message": f"Erro no teste de voz: {str(e)}"}
 
 def start_web_server(discord_bot):
     global bot_instance, public_url

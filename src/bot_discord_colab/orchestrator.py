@@ -50,12 +50,13 @@ class ConversationOrchestrator:
                     if not self.state.human_speaking and time_since_last >= patience_fala:
                         await self.state.set_new_message(False)
                         
-                        # Cancela qualquer tarefa anterior antes de começar a nova
-                        if self.active_task and not self.active_task.done():
-                            self.active_task.cancel()
+                        if self.state.auto_respond:
+                            # Cancela qualquer tarefa anterior antes de começar a nova
+                            if self.active_task and not self.active_task.done():
+                                self.active_task.cancel()
 
-                        # Dispara a geração de resposta em uma task cancelável
-                        self.active_task = asyncio.create_task(self.process_response_pipeline())
+                            # Dispara a geração de resposta em uma task cancelável
+                            self.active_task = asyncio.create_task(self.process_response_pipeline())
 
             except Exception as e:
                 print(f"[Orquestrador] Erro no loop de orquestração: {e}")
@@ -108,27 +109,32 @@ class ConversationOrchestrator:
             self.state.bot_thinking = False
 
             # 2. Geração do áudio falado (TTS)
-            tts_path_gen = tempfile.mktemp(suffix=".wav")
-            tts_path = await self.tts_mgr.generate_speech(reply, tts_path_gen)
+            if self.state.tts_enabled:
+                tts_path_gen = tempfile.mktemp(suffix=".wav")
+                tts_path = await self.tts_mgr.generate_speech(reply, tts_path_gen)
 
-            if tts_path is None:
-                print("[Orquestrador] Falha ao gerar fala via TTS.")
-                return
+                if tts_path is None:
+                    print("[Orquestrador] Falha ao gerar fala via TTS.")
+                    return
 
-            if asyncio.current_task().cancelled():
-                try:
-                    if os.path.exists(tts_path):
-                        os.remove(tts_path)
-                except:
-                    pass
-                return
+                if asyncio.current_task().cancelled():
+                    try:
+                        if os.path.exists(tts_path):
+                            os.remove(tts_path)
+                    except:
+                        pass
+                    return
 
-            # 3. Adiciona a resposta gerada ao histórico
-            await self.state.add_response(text=reply)
+                # 3. Adiciona a resposta gerada ao histórico
+                await self.state.add_response(text=reply)
 
-            # 4. Toca o áudio gerado no Discord
-            print(f"[Orquestrador] Enviando áudio gerado ao Discord: {tts_path}")
-            self.bot.play_audio_on_active_call(tts_path)
+                # 4. Toca o áudio gerado no Discord
+                print(f"[Orquestrador] Enviando áudio gerado ao Discord: {tts_path}")
+                self.bot.play_audio_on_active_call(tts_path)
+            else:
+                # 3. Adiciona a resposta gerada ao histórico (apenas texto)
+                print("[Orquestrador] TTS desativado. Pulando geração de áudio.")
+                await self.state.add_response(text=reply)
 
         except asyncio.CancelledError:
             print("[Orquestrador] Pipeline de resposta cancelada.")

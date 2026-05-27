@@ -55,6 +55,11 @@ def run(start_discord: bool = True):
 
     bot = DiscordVoiceBot(config=config, state=state)
     
+    # Instanciar o orquestrador de conversa e associá-lo ao bot
+    from .orchestrator import ConversationOrchestrator
+    orchestrator = ConversationOrchestrator(bot)
+    bot.orchestrator = orchestrator
+    
     # WORKAROUND V2 -> levanta o uvicorn / ngrok numa thread independente enviando a ele o objeto bot p/ call de play
     # so faz isso se passarmos a flag de painel ou por definicao temporaria nativa pra burlar o pycord+dave
     print("\n[Inicialização] Pre-loading Web Panel Thread + Ngrok Workaround...")
@@ -82,6 +87,11 @@ async def run_async(start_discord: bool = True):
         return {"config": config, "state": state}
 
     bot = DiscordVoiceBot(config=config, state=state)
+
+    # Instanciar o orquestrador de conversa e associá-lo ao bot
+    from .orchestrator import ConversationOrchestrator
+    orchestrator = ConversationOrchestrator(bot)
+    bot.orchestrator = orchestrator
 
     print("\n[Inicialização] Pre-loading Web Panel Thread + Ngrok Workaround...")
     run_web_panel_thread(bot)

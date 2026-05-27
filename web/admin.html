@@ -1,326 +1,1141 @@
-﻿<!DOCTYPE html>
-
+<!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Neuro - Painel de Administração</title>
-
-    <style>
-
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin-top: 20px; background-color: #2c2f33; color: white; }
-
-        .nav { margin-bottom: 20px; }
-
-        .nav a { color: #7289da; text-decoration: none; }
-
-        .hidden { display: none; }
-
-        input[type="password"] { padding: 10px; font-size: 16px; border-radius: 5px; border: none; }
-
-        .btn { padding: 10px 20px; font-size: 16px; border-radius: 5px; cursor: pointer; border: none; background-color: #7289da; color: white; }
-
-        .btn:hover { background-color: #5b6eae; }
-
-        #authSection { margin-top: 100px; }
-
-        
-
-        /* Voice styles */
-
-        .voice-section { margin-top: 30px; border-top: 1px solid #7289da; padding-top: 20px; }
-
-        #recordBtn { padding: 20px 40px; font-size: 20px; border-radius: 10px; cursor: pointer; border: none; background-color: #7289da; color: white; box-shadow: 0 4px 6px rgba(0,0,0,0.3); transition: background-color 0.2s; }
-
-        #recordBtn:active { background-color: #5b6eae; box-shadow: 0 1px 3px rgba(0,0,0,0.3); transform: translateY(2px); }
-
-        #recordBtn:disabled { background-color: #99aab5; cursor: not-allowed; }
-
-        #status { margin-top: 20px; font-size: 18px; color: #99aab5; }
-
-        .log-container { margin: 20px auto; width: 80%; max-width: 600px; background-color: #23272a; padding: 15px; border-radius: 8px; text-align: left; font-size: 14px; min-height: 100px; max-height: 300px; overflow-y: auto; color: #ccc; }
-
-        .user-text { color: #43b581; }
-
-        .bot-text { color: #faa61a; }
-
-        
-
-        /* Admin specific stats/styles */
-
-        .stats-box { background-color: #23272a; display: inline-block; padding: 20px; border-radius: 10px; margin: 10px; text-align: left; min-width: 250px; }
-
-    </style>
-
-</head>
-
-<body>
-
-    <div class="nav"><a href="/">&larr; Voltar ao Início</a></div>
-
+    <title>Otaori - Painel Administrativo</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     
+    <style>
+        :root {
+            --bg-color: #08080c;
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #8a2be2;
+            --primary-hover: #9d4edd;
+            --secondary: #00d2ff;
+            --secondary-hover: #33dfff;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+            --font-title: 'Outfit', sans-serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+        }
 
-    <div id="authSection">
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-        <h2>Acesso Restrito</h2>
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 0% 0%, rgba(138, 43, 226, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 100% 100%, rgba(0, 210, 255, 0.12) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
 
-        <p>Insira a senha do administrador para acessar o painel de controle:</p>
+        .nav-back {
+            align-self: flex-start;
+            margin-bottom: 20px;
+            max-width: 1100px;
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+        }
 
-        <input type="password" id="adminPassword" placeholder="Senha..." />
+        .nav-back a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
 
-        <button class="btn" onclick="checkAuth()">Entrar</button>
+        .nav-back a:hover {
+            color: var(--secondary);
+        }
 
-        <p id="authError" style="color: #f04747; display: none;">Senha incorreta.</p>
+        /* Sessão de Autenticação */
+        #authSection {
+            max-width: 450px;
+            width: 100%;
+            margin-top: 10vh;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+            animation: scaleIn 0.4s ease-out;
+        }
 
+        @keyframes scaleIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        #authSection h2 {
+            font-family: var(--font-title);
+            font-size: 1.8rem;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #fff, var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #authSection p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .input-control {
+            width: 100%;
+            padding: 14px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s;
+            font-family: var(--font-body);
+        }
+
+        .input-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 10px rgba(138, 43, 226, 0.2);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #4a00e0 100%);
+            box-shadow: 0 4px 15px rgba(138, 43, 226, 0.3);
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px rgba(138, 43, 226, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        #authError {
+            color: var(--danger);
+            font-size: 0.9rem;
+            margin-top: 15px;
+            display: none;
+        }
+
+        /* Painel Admin Completo */
+        #adminPanel {
+            max-width: 1100px;
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(25px);
+            border-radius: 28px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .panel-header {
+            padding: 30px;
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.2);
+        }
+
+        .panel-title h1 {
+            font-family: var(--font-title);
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .panel-title p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+
+        /* Sistema de Abas */
+        .tabs-nav {
+            display: flex;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--card-border);
+            padding: 0 20px;
+        }
+
+        .tab-link {
+            padding: 18px 25px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-family: var(--font-title);
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-link:hover {
+            color: white;
+        }
+
+        .tab-link.active {
+            color: var(--secondary);
+            border-bottom-color: var(--secondary);
+        }
+
+        .tab-content {
+            padding: 35px;
+            min-height: 400px;
+        }
+
+        /* Status LEDs Grid */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 35px;
+        }
+
+        .status-card {
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .status-card-info h4 {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .status-card-info p {
+            font-family: var(--font-title);
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+
+        .led {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: var(--danger);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+            transition: all 0.3s;
+        }
+
+        .led.active {
+            background-color: var(--success);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.7);
+        }
+
+        .led.warning {
+            background-color: var(--warning);
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.7);
+            animation: led-blink 1s infinite alternate;
+        }
+
+        @keyframes led-blink {
+            from { opacity: 0.5; }
+            to { opacity: 1; }
+        }
+
+        /* Aba de Monitoramento (Transcrições e Logs) */
+        .console-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 900px) {
+            .console-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .console-box {
+            display: flex;
+            flex-direction: column;
+            height: 400px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .console-header {
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.02);
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .console-header h3 {
+            font-family: var(--font-title);
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .console-body {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.05) transparent;
+        }
+
+        .console-body::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .console-body::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        .transcript-line {
+            line-height: 1.5;
+            animation: lineIn 0.3s ease-out;
+        }
+
+        @keyframes lineIn {
+            from { opacity: 0; transform: translateX(-5px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .user-tag { color: var(--secondary); font-weight: 600; }
+        .bot-tag { color: var(--primary-hover); font-weight: 600; }
+        .time-tag { color: rgba(255,255,255,0.2); font-size: 0.75rem; margin-right: 5px; }
+
+        /* Aba de Ações e Controles */
+        .controls-wrapper {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .control-group-card {
+            background: rgba(255,255,255,0.01);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 25px;
+        }
+
+        .control-group-card h3 {
+            font-family: var(--font-title);
+            font-size: 1.25rem;
+            margin-bottom: 20px;
+            border-left: 3px solid var(--secondary);
+            padding-left: 12px;
+        }
+
+        .control-btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn-action-panel {
+            padding: 14px;
+            font-family: var(--font-body);
+            font-weight: 600;
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+            background: rgba(255,255,255,0.03);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-action-panel:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .btn-action-panel.btn-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .btn-action-panel.btn-danger:hover {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        /* Toggle Switches */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .toggle-row:last-child {
+            border-bottom: none;
+        }
+
+        .toggle-info h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .toggle-info p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255,255,255,0.1);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--success);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Formulários de Configurações */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .form-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            border-top: 1px solid var(--card-border);
+            padding-top: 25px;
+        }
+
+        /* Caixa de Upload de Voz */
+        .upload-area {
+            border: 2px dashed var(--card-border);
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255,255,255,0.01);
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: var(--secondary);
+            background: rgba(0, 210, 255, 0.02);
+        }
+
+        .upload-area p {
+            color: var(--text-muted);
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        #voiceRefPath {
+            font-size: 0.85rem;
+            color: var(--secondary);
+            margin-top: 10px;
+            word-break: break-all;
+        }
+
+        /* Teste de TTS */
+        .tts-test-box {
+            background: rgba(255,255,255,0.01);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 25px;
+        }
+
+        .tts-test-input-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .tts-test-input-row input {
+            flex-grow: 1;
+        }
+
+        #audioPlayer {
+            width: 100%;
+            margin-top: 15px;
+            border-radius: 8px;
+            background: #111;
+        }
+
+        .btn-save-inline {
+            width: auto;
+            padding: 10px 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-back">
+        <a href="/">&larr; Voltar ao Portal</a>
     </div>
 
+    <!-- Login Area -->
+    <div id="authSection">
+        <h2>Acesso Restrito</h2>
+        <p>Insira a credencial de segurança administrativa para obter acesso às configurações do sistema.</p>
+        <div class="input-group">
+            <label for="adminPassword">Senha do Administrador</label>
+            <input type="password" id="adminPassword" class="input-control" placeholder="••••••••" onkeydown="if(event.key==='Enter') checkAuth()"/>
+        </div>
+        <button class="btn btn-primary" onclick="checkAuth()">Acessar Painel</button>
+        <p id="authError">Senha incorreta. Tente novamente.</p>
+    </div>
 
-
+    <!-- Main Admin Dashboard -->
     <div id="adminPanel" class="hidden">
+        <header class="panel-header">
+            <div class="panel-title">
+                <h1>Painel Administrativo</h1>
+                <p>Configurações globais e monitoramento técnico em tempo real</p>
+            </div>
+            <div class="bot-info">
+                <button class="btn-action-panel btn-danger" onclick="logout()" style="padding: 8px 15px; font-size: 0.85rem;">Sair</button>
+            </div>
+        </header>
 
-        <h1>Painel de Controle do Bot</h1>
+        <!-- Navigation Tabs -->
+        <nav class="tabs-nav">
+            <button class="tab-link active" onclick="switchTab('monitor')">📈 Monitor</button>
+            <button class="tab-link" onclick="switchTab('controles')">⚙️ Controles</button>
+            <button class="tab-link" onclick="switchTab('persona')">🧠 Persona</button>
+            <button class="tab-link" onclick="switchTab('voz')">🔊 Ajustes de Voz</button>
+        </nav>
 
-        
+        <!-- Container de Status Geral -->
+        <div style="padding: 30px 30px 0 30px;">
+            <div class="status-grid">
+                <div class="status-card">
+                    <div class="status-card-info">
+                        <h4>Status Bot</h4>
+                        <p id="statBot">Carregando...</p>
+                    </div>
+                    <div id="ledBot" class="led"></div>
+                </div>
+                <div class="status-card">
+                    <div class="status-card-info">
+                        <h4>Discord Call</h4>
+                        <p id="statDiscord">Desconectado</p>
+                    </div>
+                    <div id="ledDiscord" class="led"></div>
+                </div>
+                <div class="status-card">
+                    <div class="status-card-info">
+                        <h4>Motor STT</h4>
+                        <p id="statSTT">Inativo</p>
+                    </div>
+                    <div id="ledSTT" class="led"></div>
+                </div>
+                <div class="status-card">
+                    <div class="status-card-info">
+                        <h4>Motor TTS</h4>
+                        <p id="statTTS">Inativo</p>
+                    </div>
+                    <div id="ledTTS" class="led"></div>
+                </div>
+            </div>
+        </div>
 
-        <div>
-
-            <div class="stats-box">
-
-                <h3>Ajustes do Bot</h3>
-
-                <p>Status: <span style="color:#43b581">Online</span></p>
-
-                <p>Aqui você poderá ajustar a personalidade, resetar o bot, chutar da call, etc. (Em desenvolvimento)</p>
-
+        <!-- Conteúdo das Abas -->
+        <div class="tab-content">
+            <!-- ABA MONITOR -->
+            <div id="tab-monitor" class="tab-pane">
+                <div class="console-grid">
+                    <!-- Histórico Recente -->
+                    <div class="console-box">
+                        <header class="console-header">
+                            <h3>Conversas Recentes</h3>
+                            <button class="btn-action-panel" style="padding: 5px 10px; font-size: 0.8rem;" onclick="clearHistory()">Limpar Chat</button>
+                        </header>
+                        <div class="console-body" id="transcriptsBody">
+                            <div class="transcript-line text-muted">Aguardando atualizações WebSocket...</div>
+                        </div>
+                    </div>
+                    <!-- Logs / Eventos Técnicos -->
+                    <div class="console-box">
+                        <header class="console-header">
+                            <h3>Logs do Sistema</h3>
+                            <span class="text-muted" style="font-size:0.75rem;">Últimos eventos técnicos</span>
+                        </header>
+                        <div class="console-body" id="logsBody" style="background:#050508; font-family: monospace;">
+                            <div class="transcript-line text-muted">[SYSTEM] Painel aberto. Conectando websocket de status...</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
+            <!-- ABA CONTROLES -->
+            <div id="tab-controles" class="tab-pane hidden">
+                <div class="controls-wrapper">
+                    <!-- Gerenciamento de Call -->
+                    <div class="control-group-card">
+                        <h3>Ações da Chamada</h3>
+                        <div class="input-group">
+                            <label for="channelIdInput">ID do Canal de Voz (Opcional)</label>
+                            <input type="text" id="channelIdInput" class="input-control" placeholder="Deixe em branco para canal automático"/>
+                        </div>
+                        <div class="control-btn-grid" style="margin-top: 20px;">
+                            <button class="btn-action-panel" onclick="joinCall()">Conectar Call</button>
+                            <button class="btn-action-panel btn-danger" onclick="leaveCall()">Desconectar</button>
+                        </div>
+                    </div>
+
+                    <!-- Parar/Interromper -->
+                    <div class="control-group-card">
+                        <h3>Controle de Resposta</h3>
+                        <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 20px;">
+                            Se o bot estiver falando algo indesejado ou travado gerando texto, interrompa instantaneamente.
+                        </p>
+                        <div class="control-btn-grid">
+                            <button class="btn-action-panel btn-danger" style="grid-column: span 2;" onclick="cancelResponse()">
+                                🛑 Interromper Fala Atual
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Toggles de Recursos -->
+                    <div class="control-group-card">
+                        <h3>Ativação de Módulos</h3>
+                        
+                        <div class="toggle-row">
+                            <div class="toggle-info">
+                                <h4>Módulo STT</h4>
+                                <p>Capturar áudio e transcrever</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="toggleSTT" onchange="toggleFeature('stt', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="toggle-row">
+                            <div class="toggle-info">
+                                <h4>Módulo TTS</h4>
+                                <p>Falar áudio clonado no Discord</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="toggleTTS" onchange="toggleFeature('tts', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="toggle-row">
+                            <div class="toggle-info">
+                                <h4>Resposta Automática</h4>
+                                <p>Responder a mensagens sozinho</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="toggleAuto" onchange="toggleFeature('auto_respond', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA PERSONA -->
+            <div id="tab-persona" class="tab-pane hidden">
+                <form id="personaForm" onsubmit="saveConfig(event)">
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label for="pName">Nome do Bot</label>
+                            <input type="text" id="pName" class="input-control" required/>
+                        </div>
+                        <div class="input-group">
+                            <label for="pWake">Wake Word (Gatilho)</label>
+                            <input type="text" id="pWake" class="input-control" required/>
+                        </div>
+                        <div class="input-group">
+                            <label for="pModel">Modelo LLM</label>
+                            <input type="text" id="pModel" class="input-control" required/>
+                        </div>
+                        <div class="input-group">
+                            <label for="pTtsModel">Modelo TTS</label>
+                            <input type="text" id="pTtsModel" class="input-control" required/>
+                        </div>
+                        <div class="input-group" style="grid-column: span 2;">
+                            <label for="pDesc">Descrição / Identidade Curta</label>
+                            <input type="text" id="pDesc" class="input-control" required/>
+                        </div>
+                        <div class="input-group" style="grid-column: span 2;">
+                            <label for="pPersonality">Personalidade (Comportamento e Diretrizes)</label>
+                            <textarea id="pPersonality" class="input-control" style="height: 120px; font-family: var(--font-body); resize: vertical;" required></textarea>
+                        </div>
+                    </div>
+                    <div class="form-buttons">
+                        <button type="submit" class="btn btn-primary btn-save-inline">Salvar Configurações</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ABA VOZ -->
+            <div id="tab-voz" class="tab-pane hidden">
+                <div class="controls-wrapper">
+                    <!-- Upload -->
+                    <div class="control-group-card" style="grid-column: span 2;">
+                        <h3>Voz de Referência (Clonagem)</h3>
+                        <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 20px;">
+                            Envie um arquivo de áudio curto de 5 a 15 segundos em formato <b>WAV</b> para clonagem de voz.
+                        </p>
+                        
+                        <div class="upload-area" onclick="document.getElementById('voiceFileInput').click()">
+                            <span style="font-size: 2.5rem;">📁</span>
+                            <p>Arraste um áudio ou clique aqui para fazer o upload</p>
+                            <input type="file" id="voiceFileInput" accept=".wav" style="display:none" onchange="uploadVoiceFile(this)"/>
+                        </div>
+
+                        <div id="voiceRefPath">Voz ativa: Carregando...</div>
+                    </div>
+
+                    <!-- Teste TTS -->
+                    <div class="control-group-card" style="grid-column: span 2;">
+                        <h3>Teste de Voz Local</h3>
+                        <p class="text-muted" style="font-size: 0.85rem;">
+                            Escreva uma frase abaixo para testar a clonagem de voz diretamente no alto-falante do seu navegador antes de colocar o bot para falar no Discord.
+                        </p>
+                        <div class="tts-test-input-row">
+                            <input type="text" id="ttsTestInput" class="input-control" placeholder="Frase de teste..."/>
+                            <button class="btn btn-primary" onclick="testTtsSpeech()" style="width: auto; padding: 0 25px;">Sintetizar</button>
+                        </div>
+                        <audio id="audioPlayer" controls class="hidden"></audio>
+                    </div>
+                </div>
+            </div>
         </div>
-
-
-
-        <div class="voice-section">
-
-            <h2>Transmissão de Voz (Global)</h2>
-
-            <p>Admin também pode falar com o bot por aqui!</p>
-
-            <button id="recordBtn">Segure para Falar</button>
-
-            <p id="status">Pronto para gravar.</p>
-
-            <div class="log-container" id="logBox"></div>
-
-        </div>
-
     </div>
 
-
-
     <script>
-
         let adminPass = "";
+        let wsConn = null;
+        let displayedLogs = new Set();
+        let loadedConfig = {};
 
+        // 1. Autenticação básica
         async function checkAuth() {
-
             const pwd = document.getElementById('adminPassword').value;
-
-            // Valida a senha na API (aqui para simplificar, enviamos um GET /api/check_admin?pw=XYZ)
-
             const resp = await fetch("/api/check_admin?pw=" + encodeURIComponent(pwd));
-
+            
             if (resp.ok) {
-
                 const data = await resp.json();
-
                 if (data.success) {
-
-                    adminPass = pwd; // Salva a senha para usar na gravação de voz se necessário (futuro)
-
+                    adminPass = pwd;
                     document.getElementById('authSection').classList.add('hidden');
-
                     document.getElementById('adminPanel').classList.remove('hidden');
-
-                    initVoice();
-
+                    initDashboard();
                 } else {
-
-                    document.getElementById('authError').style.display = "block";
-
+                    showAuthError();
                 }
-
             } else {
-
-                document.getElementById('authError').style.display = "block";
-
+                showAuthError();
             }
-
         }
 
+        function showAuthError() {
+            document.getElementById('authError').style.display = "block";
+        }
 
+        function logout() {
+            adminPass = "";
+            if (wsConn) wsConn.close();
+            document.getElementById('adminPanel').classList.add('hidden');
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('adminPassword').value = "";
+        }
 
-        function initVoice() {
+        // 2. Abas do painel
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-link').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.add('hidden'));
+            
+            // Acha o link e o painel correto
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
 
-            let mediaRecorder;
+            if (tabId === 'persona') {
+                loadConfigForm();
+            }
+        }
 
-            let audioChunks = [];
+        // 3. Inicialização e WebSocket de Status
+        function initDashboard() {
+            addSystemLog("Inicializando painel administrativo...");
+            initStatusWebSocket();
+        }
 
-            const recordBtn = document.getElementById('recordBtn');
+        function initStatusWebSocket() {
+            const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${proto}//${window.location.host}/ws/status`;
+            
+            wsConn = new WebSocket(wsUrl);
 
-            const statusText = document.getElementById('status');
+            wsConn.onopen = () => {
+                addSystemLog("WebSocket conectado ao servidor.");
+            };
 
-            const logBox = document.getElementById('logBox');
+            wsConn.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                const state = data.state;
+                if (!state) return;
 
+                // Atualiza LEDs e status text
+                updateStatusCard("statBot", "ledBot", state.bot_thinking ? "thinking" : (state.bot_speaking ? "speaking" : "online"));
+                updateStatusCard("statDiscord", "ledDiscord", state.active_voice_channel ? "online" : "offline", state.active_voice_channel ? `Canal ID: ${state.active_voice_channel}` : "Desconectado");
+                updateStatusCard("statSTT", "ledSTT", state.stt_enabled ? (state.stt_ready ? "online" : "warning") : "offline", state.stt_enabled ? "Ativo" : "Desativado");
+                updateStatusCard("statTTS", "ledTTS", state.tts_enabled ? (state.tts_ready ? "online" : "warning") : "offline", state.tts_enabled ? "Ativo" : "Desativado");
 
+                // Atualiza switches de toggle caso não estejam focados
+                document.getElementById('toggleSTT').checked = state.stt_enabled;
+                document.getElementById('toggleTTS').checked = state.tts_enabled;
+                document.getElementById('toggleAuto').checked = state.auto_respond;
 
-            function appendLog(speaker, text, cls) {
+                // Atualiza logs de chat (Monitoramento)
+                renderTranscripts(state.recent_transcripts, state.recent_responses);
+            };
 
-                const time = new Date().toLocaleTimeString();
+            wsConn.onclose = () => {
+                addSystemLog("WebSocket desconectado. Tentando reconectar...");
+                setTimeout(initStatusWebSocket, 2000);
+            };
+        }
 
-                logBox.innerHTML += `<div>[${time}] <span class="${cls}"><b>${speaker}:</b></span> ${text}</div>`;
+        function updateStatusCard(textId, ledId, status, customText = "") {
+            const txt = document.getElementById(textId);
+            const led = document.getElementById(ledId);
+            
+            if (status === "online") {
+                txt.innerText = customText || "Pronto";
+                led.className = "led active";
+            } else if (status === "thinking") {
+                txt.innerText = "Pensando...";
+                led.className = "led warning";
+            } else if (status === "speaking") {
+                txt.innerText = "Falando...";
+                led.className = "led warning";
+            } else if (status === "warning") {
+                txt.innerText = "Preparando...";
+                led.className = "led warning";
+            } else {
+                txt.innerText = customText || "Desativado";
+                led.className = "led";
+            }
+        }
 
-                logBox.scrollTop = logBox.scrollHeight;
-
+        function renderTranscripts(transcripts, responses) {
+            const body = document.getElementById('transcriptsBody');
+            
+            let all = [];
+            (transcripts || []).forEach(t => all.push({type: 'user', name: t.username, text: t.text, ts: t.timestamp}));
+            (responses || []).forEach(r => all.push({type: 'bot', name: 'Bot', text: r.text, ts: r.timestamp}));
+            
+            all.sort((a,b) => a.ts - b.ts);
+            
+            if (all.length === 0) {
+                body.innerHTML = '<div class="transcript-line text-muted">Nenhuma conversa registrada.</div>';
+                return;
             }
 
-
-
-            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-
-                mediaRecorder = new MediaRecorder(stream);
-
-                
-
-                mediaRecorder.ondataavailable = e => {
-
-                    audioChunks.push(e.data);
-
-                };
-
-                
-
-                mediaRecorder.onstop = async () => {
-
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-
-                    audioChunks = [];
-
-                    statusText.innerText = "Processando áudio via Admin...";
-
-                    recordBtn.disabled = true;
-
-                    
-
-                    const formData = new FormData();
-
-                    formData.append("file", audioBlob, "voice.webm"); formData.append("username", "Admin");
-
-                    // (Opcional) Podemos mandar adminPass se em algum momento restringirmos uploads no backend!
-
-
-
-                    try {
-
-                        const response = await fetch('/audio/upload', { method: 'POST', body: formData });
-
-                        const result = await response.json();
-
-                        
-
-                        if (response.ok && result.transcription) {
-
-                            statusText.innerText = "Respondido!";
-
-                            appendLog("Admin", result.transcription, "user-text");
-
-                            appendLog("Neuro", result.reply, "bot-text");
-
-                        } else {
-
-                            statusText.innerText = "Erro: " + (result.message || "Falha na resposta.");
-
-                        }
-
-                    } catch (err) {
-
-                        statusText.innerText = "Erro de conexão com o servidor.";
-
-                    }
-
-                    
-
-                    recordBtn.disabled = false;
-
-                };
-
-            }).catch(err => {
-
-                statusText.innerText = "Erro ao acessar microfone. Verifique as permissões do navegador.";
-
-                recordBtn.disabled = true;
-
+            let html = "";
+            all.forEach(msg => {
+                const time = new Date(msg.ts * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const tagClass = msg.type === 'user' ? 'user-tag' : 'bot-tag';
+                html += `
+                    <div class="transcript-line">
+                        <span class="time-tag">[${time}]</span>
+                        <span class="${tagClass}">${msg.name}:</span>
+                        <span>${msg.text}</span>
+                    </div>
+                `;
             });
-
-
-
-            const startRecording = (e) => {
-
-                if (e) e.preventDefault();
-
-                if (mediaRecorder && mediaRecorder.state === "inactive") {
-
-                    mediaRecorder.start();
-
-                    recordBtn.style.backgroundColor = "#f04747";
-
-                    recordBtn.innerText = "Gravando... (Solte para enviar)";
-
-                    statusText.innerText = "Ouvindo...";
-
-                }
-
-            };
-
-
-
-            const stopRecording = (e) => {
-
-                if (e) e.preventDefault();
-
-                if (mediaRecorder && mediaRecorder.state === "recording") {
-
-                    mediaRecorder.stop();
-
-                    recordBtn.style.backgroundColor = "#7289da";
-
-                    recordBtn.innerText = "Segure para Falar";
-
-                }
-
-            };
-
-
-
-            recordBtn.addEventListener('mousedown', startRecording);
-
-            recordBtn.addEventListener('mouseup', stopRecording);
-
-            recordBtn.addEventListener('mouseleave', stopRecording);
-
-            recordBtn.addEventListener('touchstart', startRecording);
-
-            recordBtn.addEventListener('touchend', stopRecording);
-
-            recordBtn.addEventListener('touchcancel', stopRecording);
-
+            body.innerHTML = html;
         }
 
+        function addSystemLog(text) {
+            const body = document.getElementById('logsBody');
+            const time = new Date().toLocaleTimeString();
+            body.innerHTML += `<div class="transcript-line"><span class="time-tag">[${time}]</span> <span style="color:#10b981">[SYSTEM]</span> ${text}</div>`;
+            body.scrollTop = body.scrollHeight;
+        }
+
+        // 4. APIs de Controle
+        async function joinCall() {
+            const channelId = document.getElementById('channelIdInput').value;
+            let url = "/api/control/join";
+            if (channelId.trim() !== "") {
+                url += "?channel_id=" + encodeURIComponent(channelId);
+            }
+            
+            addSystemLog("Solicitando conexão no canal...");
+            const resp = await fetch(url, { method: 'POST' });
+            const data = await resp.json();
+            if (data.success) {
+                addSystemLog(data.message);
+            } else {
+                addSystemLog("Falha: " + data.message);
+            }
+        }
+
+        async function leaveCall() {
+            addSystemLog("Solicitando desconexão...");
+            const resp = await fetch("/api/control/leave", { method: 'POST' });
+            const data = await resp.json();
+            if (data.success) {
+                addSystemLog(data.message);
+            } else {
+                addSystemLog("Falha: " + data.message);
+            }
+        }
+
+        async function cancelResponse() {
+            addSystemLog("Interrompendo fala/geração atual do bot...");
+            const resp = await fetch("/api/cancel", { method: 'POST' });
+            const data = await resp.json();
+            addSystemLog(data.message);
+        }
+
+        async function clearHistory() {
+            const resp = await fetch("/api/control/clear_history", { method: 'POST' });
+            const data = await resp.json();
+            if (data.success) {
+                addSystemLog("Histórico limpo.");
+            }
+        }
+
+        async function toggleFeature(feature, enabled) {
+            const resp = await fetch(`/api/control/toggle_feature?feature=${feature}&enabled=${enabled}`, { method: 'POST' });
+            const data = await resp.json();
+            if (data.success) {
+                addSystemLog(`Módulo '${feature}' alterado para: ${enabled ? 'ATIVO' : 'INATIVO'}`);
+            }
+        }
+
+        // 5. Configuração da Persona
+        async function loadConfigForm() {
+            const resp = await fetch("/api/config");
+            const data = await resp.json();
+            if (data.success) {
+                loadedConfig = data;
+                const profile = data.profile || {};
+                const settings = data.settings || {};
+                
+                document.getElementById('pName').value = profile.name || "";
+                document.getElementById('pWake').value = profile.wake_word || "";
+                document.getElementById('pModel').value = profile.llm_model || "";
+                document.getElementById('pTtsModel').value = profile.tts_model || "";
+                document.getElementById('pDesc').value = profile.description || "";
+                document.getElementById('pPersonality').value = profile.personality || "";
+                
+                document.getElementById('voiceRefPath').innerText = `Voz ativa: ${settings.voice_reference || 'Nenhuma configurada'}`;
+            }
+        }
+
+        async function saveConfig(e) {
+            e.preventDefault();
+            if (!loadedConfig.profile) loadedConfig.profile = {};
+            
+            loadedConfig.profile.name = document.getElementById('pName').value;
+            loadedConfig.profile.wake_word = document.getElementById('pWake').value;
+            loadedConfig.profile.llm_model = document.getElementById('pModel').value;
+            loadedConfig.profile.tts_model = document.getElementById('pTtsModel').value;
+            loadedConfig.profile.description = document.getElementById('pDesc').value;
+            loadedConfig.profile.personality = document.getElementById('pPersonality').value;
+            
+            addSystemLog("Atualizando configurações no disco...");
+            const resp = await fetch("/api/config/update", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(loadedConfig)
+            });
+            const data = await resp.json();
+            if (data.success) {
+                addSystemLog("Configurações aplicadas!");
+                alert("Identidade atualizada com sucesso!");
+            } else {
+                addSystemLog("Erro: " + data.message);
+            }
+        }
+
+        // 6. Vozes e Testes
+        async function uploadVoiceFile(input) {
+            if (input.files.length === 0) return;
+            const file = input.files[0];
+            
+            addSystemLog(`Fazendo upload de voz: ${file.name}...`);
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const resp = await fetch("/api/voice/upload", {
+                method: 'POST',
+                body: formData
+            });
+            const data = await resp.json();
+            if (data.success) {
+                addSystemLog(`Voz carregada: ${data.message}`);
+                document.getElementById('voiceRefPath').innerText = `Voz ativa: voices/${data.filename}`;
+            } else {
+                addSystemLog(`Falha no upload: ${data.message}`);
+            }
+        }
+
+        async function testTtsSpeech() {
+            const text = document.getElementById('ttsTestInput').value;
+            if (text.trim() === "") return;
+            
+            addSystemLog("Sintetizando fala para teste local...");
+            const formData = new FormData();
+            formData.append("text", text);
+            
+            const resp = await fetch("/api/voice/test", {
+                method: 'POST',
+                body: formData
+            });
+            const data = await resp.json();
+            if (data.success) {
+                addSystemLog("Áudio gerado. Reproduzindo...");
+                const player = document.getElementById('audioPlayer');
+                // Adiciona um timestamp para limpar cache
+                player.src = data.audio_url + "?t=" + new Date().getTime();
+                player.classList.remove('hidden');
+                player.play();
+            } else {
+                addSystemLog("Erro: " + data.message);
+            }
+        }
     </script>
-
 </body>
-
 </html>
-

@@ -30,6 +30,10 @@ class CentralState:
         self.new_message: bool = False
         self.cancel_requested: bool = False
         
+        self.stt_enabled: bool = True
+        self.tts_enabled: bool = True
+        self.auto_respond: bool = True
+        
         self.active_voice_channel: Optional[int] = None
         self.current_speakers: Set[int] = set()
         
@@ -104,6 +108,18 @@ class CentralState:
         with self._lock:
             self.cancel_requested = val
 
+    async def set_stt_enabled(self, val: bool):
+        with self._lock:
+            self.stt_enabled = val
+
+    async def set_tts_enabled(self, val: bool):
+        with self._lock:
+            self.tts_enabled = val
+
+    async def set_auto_respond(self, val: bool):
+        with self._lock:
+            self.auto_respond = val
+
     def get_summary(self) -> Dict[str, Any]:
         with self._lock:
             return {
@@ -112,6 +128,9 @@ class CentralState:
                 "bot_speaking": self.bot_speaking,
                 "stt_ready": self.stt_ready,
                 "tts_ready": self.tts_ready,
+                "stt_enabled": self.stt_enabled,
+                "tts_enabled": self.tts_enabled,
+                "auto_respond": self.auto_respond,
                 "new_message": self.new_message,
                 "cancel_requested": self.cancel_requested,
                 "active_voice_channel": self.active_voice_channel,
