@@ -27,6 +27,8 @@ class CentralState:
         self.bot_speaking: bool = False
         self.stt_ready: bool = False
         self.tts_ready: bool = False
+        self.new_message: bool = False
+        self.cancel_requested: bool = False
         
         self.active_voice_channel: Optional[int] = None
         self.current_speakers: Set[int] = set()
@@ -94,16 +96,27 @@ class CentralState:
             self.init_queue()
         return await self.event_queue.get()
 
+    async def set_new_message(self, val: bool):
+        with self._lock:
+            self.new_message = val
+
+    async def set_cancel_requested(self, val: bool):
+        with self._lock:
+            self.cancel_requested = val
+
     def get_summary(self) -> Dict[str, Any]:
-        return {
-            "human_speaking": self.human_speaking,
-            "bot_thinking": self.bot_thinking,
-            "bot_speaking": self.bot_speaking,
-            "stt_ready": self.stt_ready,
-            "tts_ready": self.tts_ready,
-            "active_voice_channel": self.active_voice_channel,
-            "current_speakers": list(self.current_speakers),
-            "recent_transcripts": [t.model_dump() for t in self.recent_transcripts[-10:]],
-            "recent_responses": [r.model_dump() for r in self.recent_responses[-10:]],
-            "last_message_time": self.last_message_time
-        }
+        with self._lock:
+            return {
+                "human_speaking": self.human_speaking,
+                "bot_thinking": self.bot_thinking,
+                "bot_speaking": self.bot_speaking,
+                "stt_ready": self.stt_ready,
+                "tts_ready": self.tts_ready,
+                "new_message": self.new_message,
+                "cancel_requested": self.cancel_requested,
+                "active_voice_channel": self.active_voice_channel,
+                "current_speakers": list(self.current_speakers),
+                "recent_transcripts": [t.model_dump() for t in self.recent_transcripts[-10:]],
+                "recent_responses": [r.model_dump() for r in self.recent_responses[-10:]],
+                "last_message_time": self.last_message_time
+            }

@@ -1,4 +1,4 @@
-﻿import os
+import os
 import requests
 
 def generate_reply(text: str, config=None, state=None) -> str:
@@ -17,26 +17,41 @@ def generate_reply(text: str, config=None, state=None) -> str:
 
     bot_name = config.name if config else "Neuro"
 
-    system_prompt = (
+    # Camada 10 - Identidade e Persona do Bot
+    persona_prompt = (
         f"Você é {bot_name}, uma pessoa participando de uma chamada de voz (call) no Discord conversando com amigos. "
         "Você deve falar e reagir de forma SUPER curta, casual, orgânica e humanizada. "
-        "Responda sempre em português do Brasil (pt-BR). Tente limitar a resposta a 1 ou no máximo 2 frases fluidas. "
         "Não use emojis, markdown ou formatos difíceis de serem falados, pois a sua resposta será lida pelo seu clone de voz."
     )
 
+    # Camada 40 - Contexto da Call (se houver state)
+    call_context = ""
+    if state and state.active_voice_channel:
+        speakers_str = ", ".join(map(str, state.current_speakers)) if state.current_speakers else "nenhum detectado"
+        call_context = f"\nContexto atual da chamada: Canal ID {state.active_voice_channel} ativo. Membros ativos: {speakers_str}."
+
+    system_prompt = f"{persona_prompt}{call_context}"
     history_messages = [{"role": "system", "content": system_prompt}]
     
+    # Camada 80 - Histórico Recente de Conversas
     if state:
         combined = []
         for t in state.recent_transcripts:
-            combined.append((t.timestamp, {"role": "user", "content": f"{t.username} disse: {t.text}"}))
+            combined.append((t.timestamp, {"role": "user", "content": f"{t.username}: {t.text}"}))
         for r in state.recent_responses:
             combined.append((r.timestamp, {"role": "assistant", "content": r.text}))
             
         combined.sort(key=lambda x: x[0])
         history_messages.extend([item[1] for item in combined[-8:]])
         
+    # Camada 100 - Nova Mensagem/Fala do Usuário
     history_messages.append({"role": "user", "content": text})
+
+    # Camada 120 - Diretriz Final de Escrita e Idioma
+    history_messages.append({
+        "role": "system",
+        "content": "Diretriz Final: Responda sempre em português do Brasil (pt-BR). Limite estritamente sua resposta a uma fala muito curta, contendo no máximo 1 ou 2 frases curtas e fluidas. Não use markdown, asteriscos ou emojis."
+    })
 
     payload = {
         "model": model,

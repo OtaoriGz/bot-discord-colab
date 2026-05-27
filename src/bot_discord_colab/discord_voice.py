@@ -193,6 +193,18 @@ class DiscordVoiceBot:
                             if os.path.exists(file_path):
                                 os.remove(file_path)
                         except: pass
+                        if self.bot and self.bot.loop:
+                            asyncio.run_coroutine_threadsafe(
+                                self.state.update_speaking_state(False, source="bot"),
+                                self.bot.loop
+                            )
+
+                    # Sinalizar início de fala do bot
+                    if self.bot and self.bot.loop:
+                        asyncio.run_coroutine_threadsafe(
+                            self.state.update_speaking_state(True, source="bot"),
+                            self.bot.loop
+                        )
 
                     voice_client.play(source, after=after_play)
                     break
@@ -201,6 +213,22 @@ class DiscordVoiceBot:
             self.bot.loop.call_soon_threadsafe(_do_play)
         else:
             _do_play()
+
+    def stop_audio(self):
+        if not self.state.active_voice_channel:
+            return
+
+        def _do_stop():
+            for guild_id, voice_client in self.voice_clients.items():
+                if voice_client.channel.id == self.state.active_voice_channel:
+                    if voice_client.is_playing():
+                        voice_client.stop()
+                    break
+
+        if self.bot and self.bot.loop:
+            self.bot.loop.call_soon_threadsafe(_do_stop)
+        else:
+            _do_stop()
 
 
 def run_discord_bot(config: AppConfig, state: CentralState):
