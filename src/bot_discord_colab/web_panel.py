@@ -4,13 +4,13 @@ import threading
 import asyncio
 import yaml
 import json
+import uvicorn
 from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, Form, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pyngrok import ngrok
-import uvicorn
-
+from typing import Optional
 from .stt import transcribe_audio
 
 app = FastAPI()
