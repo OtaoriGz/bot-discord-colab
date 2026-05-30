@@ -1,6 +1,7 @@
 import os
 import requests
 import logging
+from typing import List
 from src.bot_discord_colab.memory import memory_manager
 
 logger = logging.getLogger(__name__)
