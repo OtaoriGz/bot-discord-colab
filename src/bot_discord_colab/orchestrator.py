@@ -121,7 +121,7 @@ class ConversationOrchestrator:
             if asyncio.current_task().cancelled() or not sentences:
                 return
 
-            print(f"[Orquestrador] Sentenças geradas em {llm_duration:.2fs}: {sentences}")
+            print(f"[Orquestrador] Sentenças geradas em {llm_duration:.2f}s: {sentences}")
 
             # 2. Geração sequencial e rápida de cada chunk de áudio via TTS
             tts_start = time.time()

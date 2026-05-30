@@ -94,7 +94,7 @@ async def upload_audio(file: UploadFile = File(...), username: str = Form("WebUs
         transcribed_info = transcribe_audio(temp_path)
         transcribed_text = transcribed_info["text"]
         stt_duration = time.time() - start_time
-        print(f"[PAINEL] Ouvido ({transcribed_info['avg_logprob']:.2f}) em {stt_duration:.2fs}: {transcribed_text}")
+        print(f"[PAINEL] Ouvido ({transcribed_info['avg_logprob']:.2f}) em {stt_duration:.2f}s: {transcribed_text}")
         
         if bot_instance and bot_instance.state:
             await bot_instance.state.set_stt_duration(stt_duration)
