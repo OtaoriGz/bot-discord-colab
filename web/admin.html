@@ -671,6 +671,38 @@
                     <div id="ledTTS" class="led"></div>
                 </div>
             </div>
+            
+            <!-- Grid de Latência -->
+            <div class="status-grid" style="grid-template-columns: repeat(4, 1fr); margin-top: 15px;">
+                <div class="status-card" style="background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.03);">
+                    <div class="status-card-info">
+                        <h4>Último STT (Whisper)</h4>
+                        <p id="latencySTT">0.00s</p>
+                    </div>
+                    <span style="font-size: 1.2rem;">🎙️</span>
+                </div>
+                <div class="status-card" style="background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.03);">
+                    <div class="status-card-info">
+                        <h4>Último LLM (Pensamento)</h4>
+                        <p id="latencyLLM">0.00s</p>
+                    </div>
+                    <span style="font-size: 1.2rem;">🧠</span>
+                </div>
+                <div class="status-card" style="background: rgba(255,255,255,0.02); border-color: rgba(255,255,255,0.03);">
+                    <div class="status-card-info">
+                        <h4>Último TTS (Voz)</h4>
+                        <p id="latencyTTS">0.00s</p>
+                    </div>
+                    <span style="font-size: 1.2rem;">🔊</span>
+                </div>
+                <div class="status-card" style="background: rgba(100,255,100,0.03); border-color: rgba(100,255,100,0.08);">
+                    <div class="status-card-info">
+                        <h4>Latência Total de Resposta</h4>
+                        <p id="latencyTotal" style="color: #64ff64; font-weight: bold;">0.00s</p>
+                    </div>
+                    <span style="font-size: 1.2rem;">⚡</span>
+                </div>
+            </div>
         </div>
 
         <!-- Conteúdo das Abas -->
@@ -958,6 +990,17 @@
                 document.getElementById('toggleSTT').checked = state.stt_enabled;
                 document.getElementById('toggleTTS').checked = state.tts_enabled;
                 document.getElementById('toggleAuto').checked = state.auto_respond;
+
+                // Atualiza Latências
+                const sttSec = state.last_stt_duration || 0;
+                const llmSec = state.last_llm_duration || 0;
+                const ttsSec = state.last_tts_duration || 0;
+                const totalSec = sttSec + llmSec + ttsSec;
+
+                document.getElementById('latencySTT').innerText = `${sttSec.toFixed(2)}s`;
+                document.getElementById('latencyLLM').innerText = `${llmSec.toFixed(2)}s`;
+                document.getElementById('latencyTTS').innerText = `${ttsSec.toFixed(2)}s`;
+                document.getElementById('latencyTotal').innerText = `${totalSec.toFixed(2)}s`;
 
                 // Atualiza logs de chat (Monitoramento)
                 renderTranscripts(state.recent_transcripts, state.recent_responses);

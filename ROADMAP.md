@@ -490,7 +490,7 @@ Tarefas:
 
    Dificuldade: Dificil.
 
-7. Expor via `pyngrok` no notebook.
+7. [x] Expor via `pyngrok` no notebook.
 
    Dificuldade: Media.
 
@@ -506,11 +506,11 @@ Objetivo: permitir que o bot guarde e use informacoes relevantes.
 
 Tarefas:
 
-1. Criar memoria simples em JSON ou SQLite.
+1. [x] Criar memoria simples em JSON ou SQLite.
 
    Dificuldade: Media.
 
-2. Criar tipos de memoria:
+2. [x] Criar tipos de memoria:
    - `perfil_membro`
    - `preferencia`
    - `fato_importante`
@@ -519,7 +519,7 @@ Tarefas:
 
    Dificuldade: Facil.
 
-3. Criar CRUD de memorias:
+3. [x] Criar CRUD de memorias:
    - criar.
    - listar.
    - editar.
@@ -527,20 +527,20 @@ Tarefas:
 
    Dificuldade: Media.
 
-4. Integrar memoria ao prompt:
+4. [x] Integrar memoria ao prompt:
    - no MVP, selecionar por nome do usuario ou busca simples.
    - depois usar embeddings.
 
    Dificuldade: Media.
 
-5. Criar reflexao periodica:
+5. [x] Criar reflexao periodica:
    - a cada bloco de conversa, perguntar ao LLM o que vale salvar.
    - nao salvar informacao sensivel desnecessaria.
    - pedir confirmacao no painel antes de tornar memoria permanente, se desejado.
 
    Dificuldade: Dificil.
 
-6. Evoluir para memoria vetorial:
+6. [x] Evoluir para memoria vetorial:
    - ChromaDB ou FAISS.
    - embeddings.
    - busca semantica.
@@ -559,11 +559,11 @@ Objetivo: criar um notebook limpo que execute o repositorio.
 
 Tarefas:
 
-1. Criar notebook ou roteiro em `notebooks/`.
+1. [x] Criar notebook ou roteiro em `notebooks/`.
 
    Dificuldade: Media.
 
-2. Celulas esperadas:
+2. [x] Celulas esperadas:
    - clonar repositorio.
    - instalar dependencias.
    - instalar FFmpeg, se necessario.
@@ -574,7 +574,7 @@ Tarefas:
 
    Dificuldade: Media.
 
-3. Garantir que tokens nao sejam commitados:
+3. [x] Garantir que tokens nao sejam commitados:
    - Discord token.
    - ngrok auth token.
    - API key do LLM.
@@ -592,7 +592,7 @@ Objetivo: reduzir latencia e melhorar experiencia na call.
 
 Tarefas:
 
-1. Medir latencias:
+1. [x] Medir latencias:
    - captura de audio.
    - STT.
    - LLM.
@@ -601,7 +601,7 @@ Tarefas:
 
    Dificuldade: Media.
 
-2. Adicionar streaming no LLM:
+2. [x] Adicionar streaming no LLM:
    - receber tokens aos poucos.
    - acumular por frase.
    - enviar trechos para TTS.
@@ -634,7 +634,7 @@ Pronto quando:
 
 - O tempo entre fala do usuario e resposta do bot for aceitavel para call.
 - O bot nao parece travado.
-- O painel mostra metricas basicas.
+- O painel mostra metricas de latência em tempo real.
 
 ## Fase 11 - Seguranca, privacidade e moderacao
 

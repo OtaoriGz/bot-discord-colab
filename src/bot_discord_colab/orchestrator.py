@@ -96,22 +96,28 @@ class ConversationOrchestrator:
             self.state.bot_thinking = True
 
             # 1. Geração de resposta (LLM) executada em executor (não-bloqueante)
+            llm_start = time.time()
             loop = asyncio.get_running_loop()
             reply = await loop.run_in_executor(
                 None,
                 lambda: generate_reply(text, self.config, self.state)
             )
+            llm_duration = time.time() - llm_start
+            await self.state.set_llm_duration(llm_duration)
 
             if asyncio.current_task().cancelled():
                 return
 
-            print(f"[Orquestrador] Resposta gerada: '{reply}'")
+            print(f"[Orquestrador] Resposta gerada em {llm_duration:.2fs}: '{reply}'")
             self.state.bot_thinking = False
 
             # 2. Geração do áudio falado (TTS)
             if self.state.tts_enabled:
                 tts_path_gen = tempfile.mktemp(suffix=".wav")
+                tts_start = time.time()
                 tts_path = await self.tts_mgr.generate_speech(reply, tts_path_gen)
+                tts_duration = time.time() - tts_start
+                await self.state.set_tts_duration(tts_duration)
 
                 if tts_path is None:
                     print("[Orquestrador] Falha ao gerar fala via TTS.")
@@ -129,7 +135,7 @@ class ConversationOrchestrator:
                 await self.state.add_response(text=reply)
 
                 # 4. Toca o áudio gerado no Discord
-                print(f"[Orquestrador] Enviando áudio gerado ao Discord: {tts_path}")
+                print(f"[Orquestrador] Enviando áudio gerado em {tts_duration:.2fs} ao Discord: {tts_path}")
                 self.bot.play_audio_on_active_call(tts_path)
             else:
                 # 3. Adiciona a resposta gerada ao histórico (apenas texto)

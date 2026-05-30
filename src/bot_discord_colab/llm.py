@@ -86,6 +86,118 @@ def generate_reply(text: str, config=None, state=None) -> str:
         print(f"Erro LLM: {str(e)}")
         return "Ih, acho que me perdi no pensamento agora."
 
+def generate_reply_stream(text: str, config=None, state=None):
+    """Usa a API externa com stream=True e gera frases/sentenças curtas completas à medida que saem do LLM."""
+    api_key = os.getenv("LLM_API_KEY")
+    base_url = os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1")
+    model = os.getenv("LLM_MODEL", "llama-3.1-8b-instant")
+    
+    if not api_key:
+        yield "Desculpe, mas minha chave de inteligência não está configurada."
+        return
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+
+    bot_name = config.name if config else "Neuro"
+    bot_description = getattr(config, "description", "") if config else ""
+    bot_personality = getattr(config, "personality", "") if config else ""
+
+    persona_prompt = (
+        f"Você é {bot_name}. {bot_description}\n"
+        f"Instruções de Personalidade:\n{bot_personality}\n\n"
+        "Você deve falar e reagir de forma SUPER curta, casual, orgânica e humanizada. "
+        "Não use emojis, markdown ou formatos difíceis de serem falados, pois a sua resposta será lida pelo seu clone de voz."
+    )
+
+    call_context = ""
+    if state and state.active_voice_channel:
+        speakers_str = ", ".join(map(str, state.current_speakers)) if state.current_speakers else "nenhum detectado"
+        call_context = f"\nContexto atual da chamada: Canal ID {state.active_voice_channel} ativo. Membros ativos: {speakers_str}."
+
+    memories_context = ""
+    try:
+        memories = memory_manager.recall_memories(text, limit=3)
+        if memories:
+            facts = "\n".join([f"- {mem['text']}" for mem in memories])
+            memories_context = f"\n\n[MEMÓRIAS RELEVANTES DO PASSADO / CONTEXTO]\n{facts}"
+    except Exception as e:
+        logger.error(f"Erro ao recuperar memórias no LLM: {e}")
+
+    system_prompt = f"{persona_prompt}{call_context}{memories_context}"
+    history_messages = [{"role": "system", "content": system_prompt}]
+    
+    if state:
+        combined = []
+        for t in state.recent_transcripts:
+            combined.append((t.timestamp, {"role": "user", "content": f"{t.username}: {t.text}"}))
+        for r in state.recent_responses:
+            combined.append((r.timestamp, {"role": "assistant", "content": r.text}))
+            
+        combined.sort(key=lambda x: x[0])
+        history_messages.extend([item[1] for item in combined[-8:]])
+        
+    history_messages.append({"role": "user", "content": text})
+    history_messages.append({
+        "role": "system",
+        "content": "Diretriz Final: Responda sempre em português do Brasil (pt-BR). Limite estritamente sua resposta a uma fala muito curta, contendo no máximo 1 ou 2 frases curtas e fluidas. Não use markdown, asteriscos ou emojis."
+    })
+
+    payload = {
+        "model": model,
+        "messages": history_messages,
+        "max_tokens": 150,
+        "temperature": 0.8,
+        "stream": True
+    }
+
+    try:
+        resp = requests.post(f"{base_url}/chat/completions", json=payload, headers=headers, stream=True, timeout=15)
+        resp.raise_for_status()
+        
+        current_sentence = ""
+        # Pontuações que marcam o final de uma oração/frase
+        sentence_enders = {".", "!", "?", "\n", ";"}
+        
+        for line in resp.iter_lines():
+            if not line:
+                continue
+                
+            decoded_line = line.decode("utf-8").strip()
+            if decoded_line.startswith("data: "):
+                data_str = decoded_line[6:]
+                if data_str == "[DONE]":
+                    break
+                    
+                try:
+                    chunk = json.loads(data_str)
+                    delta = chunk["choices"][0].get("delta", {})
+                    content = delta.get("content", "")
+                    
+                    if content:
+                        current_sentence += content
+                        # Se encontrou um pontuador de fim de frase, envia o bloco gerado até agora
+                        if any(ender in content for ender in sentence_enders):
+                            # Limpa emojis e markdown antes de enviar
+                            clean = current_sentence.replace("*", "").replace("`", "").strip()
+                            if len(clean) > 2:
+                                yield clean
+                                current_sentence = ""
+                except Exception:
+                    continue
+                    
+        # Retorna o que restou caso não termine com pontuação explícita
+        if current_sentence.strip():
+            clean = current_sentence.replace("*", "").replace("`", "").strip()
+            if len(clean) > 2:
+                yield clean
+                
+    except Exception as e:
+        logger.error(f"Erro no streaming do LLM: {e}")
+        yield "Ih, acho que me perdi no pensamento agora."
+
 def reflect_on_conversation(history_entries: List[str]) -> List[str]:
     """Usa o LLM de forma síncrona/assíncrona para extrair novos fatos/memórias do histórico recente"""
     api_key = os.getenv("LLM_API_KEY")

@@ -40,6 +40,11 @@ class CentralState:
         self.recent_transcripts: List[TranscriptItem] = []
         self.recent_responses: List[ResponseItem] = []
         
+        # Latência e métricas
+        self.last_stt_duration: float = 0.0
+        self.last_llm_duration: float = 0.0
+        self.last_tts_duration: float = 0.0
+        
         self.last_message_time: float = time.time()
         self.event_queue: Optional[asyncio.Queue[BotEvent]] = None
         self._lock = threading.Lock()
@@ -120,6 +125,18 @@ class CentralState:
         with self._lock:
             self.auto_respond = val
 
+    async def set_stt_duration(self, val: float):
+        with self._lock:
+            self.last_stt_duration = val
+
+    async def set_llm_duration(self, val: float):
+        with self._lock:
+            self.last_llm_duration = val
+
+    async def set_tts_duration(self, val: float):
+        with self._lock:
+            self.last_tts_duration = val
+
     def get_summary(self) -> Dict[str, Any]:
         with self._lock:
             return {
@@ -137,5 +154,8 @@ class CentralState:
                 "current_speakers": list(self.current_speakers),
                 "recent_transcripts": [t.model_dump() for t in self.recent_transcripts[-10:]],
                 "recent_responses": [r.model_dump() for r in self.recent_responses[-10:]],
+                "last_stt_duration": self.last_stt_duration,
+                "last_llm_duration": self.last_llm_duration,
+                "last_tts_duration": self.last_tts_duration,
                 "last_message_time": self.last_message_time
             }

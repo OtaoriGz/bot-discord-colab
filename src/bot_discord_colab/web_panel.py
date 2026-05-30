@@ -88,11 +88,17 @@ async def upload_audio(file: UploadFile = File(...), username: str = Form("WebUs
         temp_path = temp_audio.name
 
     try:
+        import time
+        start_time = time.time()
         print("\n[PAINEL] Comecando STT...")
         transcribed_info = transcribe_audio(temp_path)
         transcribed_text = transcribed_info["text"]
-        print(f"[PAINEL] Ouvido ({transcribed_info['avg_logprob']:.2f}): {transcribed_text}")
+        stt_duration = time.time() - start_time
+        print(f"[PAINEL] Ouvido ({transcribed_info['avg_logprob']:.2f}) em {stt_duration:.2fs}: {transcribed_text}")
         
+        if bot_instance and bot_instance.state:
+            await bot_instance.state.set_stt_duration(stt_duration)
+            
         if not transcribed_text or transcribed_text.strip() == "":
             return {"message": "Silencio identificado ou audio ruim.", "transcription": "", "reply": ""}
         
