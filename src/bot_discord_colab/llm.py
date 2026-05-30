@@ -196,7 +196,7 @@ def generate_reply_stream(text: str, config=None, state=None):
                 yield clean
                 
     except Exception as e:
-        logger.error(f"Erro no streaming do LLM: {e}")
+        print(f"[LLM] Erro critico na requisição de streaming: {e}")
         yield "Ih, acho que me perdi no pensamento agora."
 
 def reflect_on_conversation(history_entries: List[str]) -> List[str]:

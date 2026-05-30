@@ -118,7 +118,12 @@ class ConversationOrchestrator:
             await self.state.set_llm_duration(llm_duration)
             self.state.bot_thinking = False
 
-            if asyncio.current_task().cancelled() or not sentences:
+            if asyncio.current_task().cancelled():
+                print("[Orquestrador] Processamento cancelado.")
+                return
+                
+            if not sentences:
+                print(f"[Orquestrador] Nenhuma sentenca gerada pelo LLM em {llm_duration:.2f}s. Verifique se a sua LLM_API_KEY e o LLM_MODEL estao corretos.")
                 return
 
             print(f"[Orquestrador] Sentenças geradas em {llm_duration:.2f}s: {sentences}")
