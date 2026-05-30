@@ -99,17 +99,54 @@ class TTSManager:
             print("[TTS] Texto vazio após truncamento, ignorando.")
             return None
 
-        # Definir caminho de saída
+        # --- SISTEMA DE CACHE DE FALAS COMUNS ---
+        import hashlib
+        import shutil
+        cache_dir = os.path.join("voices", "cache")
+        os.makedirs(cache_dir, exist_ok=True)
+
+        # O hash depende do texto gerado, do motor ativo e do arquivo de voz de referência ativo (para evitar tocar voz desatualizada)
+        ref_voice_name = os.path.basename(self.config.voice_reference) if self.config.voice_reference else "default"
+        hash_input = f"{text.strip().lower()}_{self.engine}_{ref_voice_name}"
+        text_hash = hashlib.md5(hash_input.encode("utf-8")).hexdigest()
+        
+        ext = ".wav" if self.engine == "xtts-v2" else ".mp3"
+        cached_file_path = os.path.join(cache_dir, f"{text_hash}{ext}")
+
+        # Se já existe no cache, copia ou retorna
+        if os.path.exists(cached_file_path):
+            print(f"[TTS/Cache] Hit de Cache encontrado para: '{text[:30]}...'. Usando arquivo pré-sintetizado.")
+            if output_path is not None:
+                try:
+                    # Se o output_path não for o mesmo e não existir, copia
+                    if cached_file_path != output_path:
+                        shutil.copy(cached_file_path, output_path)
+                    return output_path
+                except Exception as e:
+                    print(f"[TTS/Cache] Erro ao copiar do cache: {e}. Retornando o original do cache.")
+            return cached_file_path
+
+        # Definir caminho de saída se for nulo
         if output_path is None:
-            suffix = ".wav" if self.engine == "xtts-v2" else ".mp3"
+            suffix = ext
             fd, output_path = tempfile.mkstemp(suffix=suffix, prefix="tts_")
             os.close(fd)
 
         try:
+            generated_path = None
             if self.engine == "xtts-v2":
-                return await self._generate_xtts(text, output_path)
+                generated_path = await self._generate_xtts(text, output_path)
             elif self.engine == "gtts":
-                return await self._generate_gtts(text, output_path)
+                generated_path = await self._generate_gtts(text, output_path)
+
+            # Grava no cache para uso futuro se gerado com sucesso
+            if generated_path and os.path.exists(generated_path):
+                try:
+                    shutil.copy(generated_path, cached_file_path)
+                    print(f"[TTS/Cache] Fala salva no cache: {cached_file_path}")
+                except Exception as e:
+                    print(f"[TTS/Cache] Erro ao salvar no cache: {e}")
+            return generated_path
         except Exception as e:
             print(f"[TTS] Erro ao gerar áudio: {e}")
             return None

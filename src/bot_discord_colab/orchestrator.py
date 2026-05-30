@@ -90,57 +90,95 @@ class ConversationOrchestrator:
             text = last_transcript.text
             username = last_transcript.username
 
-            print(f"[Orquestrador] Processando resposta para: {username}: '{text}'")
+            print(f"[Orquestrador] Processando resposta via streaming para: {username}: '{text}'")
 
             # Seta bot_thinking = True
             self.state.bot_thinking = True
 
-            # 1. Geração de resposta (LLM) executada em executor (não-bloqueante)
+            from .llm import generate_reply_stream
+            
+            # Fila de áudios gerados pelo TTS prontos para tocar sequencialmente
+            audio_queue = []
+            full_reply_parts = []
+            
             llm_start = time.time()
+            llm_duration = 0.0
+            
+            # 1. Consome o streaming do LLM
             loop = asyncio.get_running_loop()
-            reply = await loop.run_in_executor(
-                None,
-                lambda: generate_reply(text, self.config, self.state)
-            )
+            
+            # Geramos as frases iterando no generator retornado
+            # Executamos o loop de geração em thread/executor para não travar
+            def run_stream():
+                return list(generate_reply_stream(text, self.config, self.state))
+                
+            sentences = await loop.run_in_executor(None, run_stream)
+            
             llm_duration = time.time() - llm_start
             await self.state.set_llm_duration(llm_duration)
-
-            if asyncio.current_task().cancelled():
-                return
-
-            print(f"[Orquestrador] Resposta gerada em {llm_duration:.2fs}: '{reply}'")
             self.state.bot_thinking = False
 
-            # 2. Geração do áudio falado (TTS)
-            if self.state.tts_enabled:
-                tts_path_gen = tempfile.mktemp(suffix=".wav")
-                tts_start = time.time()
-                tts_path = await self.tts_mgr.generate_speech(reply, tts_path_gen)
-                tts_duration = time.time() - tts_start
-                await self.state.set_tts_duration(tts_duration)
+            if asyncio.current_task().cancelled() or not sentences:
+                return
 
-                if tts_path is None:
-                    print("[Orquestrador] Falha ao gerar fala via TTS.")
-                    return
+            print(f"[Orquestrador] Sentenças geradas em {llm_duration:.2fs}: {sentences}")
 
+            # 2. Geração sequencial e rápida de cada chunk de áudio via TTS
+            tts_start = time.time()
+            for idx, sentence in enumerate(sentences):
                 if asyncio.current_task().cancelled():
-                    try:
-                        if os.path.exists(tts_path):
-                            os.remove(tts_path)
-                    except:
-                        pass
-                    return
+                    break
+                    
+                if not sentence.strip():
+                    continue
+                    
+                full_reply_parts.append(sentence)
+                
+                if self.state.tts_enabled:
+                    # Gera um arquivo temporário único para cada frase
+                    chunk_path_gen = tempfile.mktemp(suffix=f"_chunk_{idx}.wav")
+                    chunk_path = await self.tts_mgr.generate_speech(sentence, chunk_path_gen)
+                    
+                    if chunk_path:
+                        audio_queue.append(chunk_path)
+                        # Toca imediatamente o primeiro chunk para cortar o tempo de espera!
+                        if len(audio_queue) == 1:
+                            print(f"[Orquestrador] Tocado primeiro chunk imediatamente: {chunk_path}")
+                            self.bot.play_audio_on_active_call(chunk_path)
+                        else:
+                            # Adiciona lógica de playlist na chamada: aguarda o anterior parar para rodar o próximo
+                            # Como a chamada é assíncrona, a forma mais resiliente no py-cord
+                            # é monitorar em loop se o voice_client parou de tocar
+                            while True:
+                                if asyncio.current_task().cancelled():
+                                    break
+                                    
+                                # Acessa o status de reprodução do bot
+                                is_playing = False
+                                for guild_id, voice_client in self.bot.voice_clients.items():
+                                    if voice_client.channel.id == self.state.active_voice_channel:
+                                        is_playing = voice_client.is_playing()
+                                        break
+                                        
+                                if not is_playing:
+                                    break
+                                    
+                                await asyncio.sleep(0.05)
+                                
+                            if not asyncio.current_task().cancelled():
+                                print(f"[Orquestrador] Tocando próximo chunk da fila: {chunk_path}")
+                                self.bot.play_audio_on_active_call(chunk_path)
+            
+            tts_duration = time.time() - tts_start
+            await self.state.set_tts_duration(tts_duration)
 
-                # 3. Adiciona a resposta gerada ao histórico
-                await self.state.add_response(text=reply)
-
-                # 4. Toca o áudio gerado no Discord
-                print(f"[Orquestrador] Enviando áudio gerado em {tts_duration:.2fs} ao Discord: {tts_path}")
-                self.bot.play_audio_on_active_call(tts_path)
+            # 3. Adiciona a resposta completa ao histórico
+            full_reply_text = " ".join(full_reply_parts)
+            if full_reply_text.strip():
+                await self.state.add_response(text=full_reply_text)
+                print(f"[Orquestrador] Resposta final integrada ao histórico: '{full_reply_text}'")
             else:
-                # 3. Adiciona a resposta gerada ao histórico (apenas texto)
-                print("[Orquestrador] TTS desativado. Pulando geração de áudio.")
-                await self.state.add_response(text=reply)
+                print("[Orquestrador] Nenhuma fala válida gerada.")
 
             # Dispara Reflexão de Memórias a cada 10 mensagens no histórico
             # Limita a execução em background para não travar a conversa

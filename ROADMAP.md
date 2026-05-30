@@ -608,7 +608,7 @@ Tarefas:
 
    Dificuldade: Dificil.
 
-3. Adicionar streaming/chunks no TTS:
+3. [x] Adicionar streaming/chunks no TTS:
    - avaliar XTTS-v2 direto.
    - avaliar RealtimeTTS.
    - tocar audio antes da frase inteira terminar.
@@ -616,7 +616,7 @@ Tarefas:
 
    Dificuldade: Critica.
 
-4. Cache de falas comuns:
+4. [x] Cache de falas comuns:
    - saudacoes.
    - frases curtas.
    - respostas de sistema.

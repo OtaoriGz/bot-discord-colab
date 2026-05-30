@@ -11,3 +11,5 @@ llm_model: "llama-3.1-8b-instant"
 active_guild_id: null
 active_voice_channel_id: null
 listen_filter: []  # Lista de IDs de usuários do Discord que o bot deve escutar. Vazio = escuta todos.
+
+voice_reference: "voices/reference.wav"
