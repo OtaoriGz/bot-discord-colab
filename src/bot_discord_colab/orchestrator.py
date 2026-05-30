@@ -136,9 +136,52 @@ class ConversationOrchestrator:
                 print("[Orquestrador] TTS desativado. Pulando geração de áudio.")
                 await self.state.add_response(text=reply)
 
+            # Dispara Reflexão de Memórias a cada 10 mensagens no histórico
+            # Limita a execução em background para não travar a conversa
+            total_messages = len(self.state.recent_transcripts) + len(self.state.recent_responses)
+            if total_messages > 0 and total_messages % 10 == 0:
+                print(f"[Orquestrador] Disparando reflexão assíncrona (Histórico: {total_messages} mensagens)")
+                asyncio.create_task(self.trigger_reflection_task())
+
         except asyncio.CancelledError:
             print("[Orquestrador] Pipeline de resposta cancelada.")
             raise
         except Exception as e:
             print(f"[Orquestrador] Erro na pipeline de resposta: {e}")
             self.state.bot_thinking = False
+
+    async def trigger_reflection_task(self):
+        """Prepara o histórico de conversas e chama o LLM para refletir e extrair fatos importantes."""
+        try:
+            from .llm import reflect_on_conversation
+            from .memory import memory_manager
+            
+            # Reconstrói a conversa recente ordenada por tempo
+            combined = []
+            for t in self.state.recent_transcripts:
+                combined.append((t.timestamp, f"{t.username}: {t.text}"))
+            for r in self.state.recent_responses:
+                combined.append((r.timestamp, f"{self.config.name if self.config else 'Neuro'}: {r.text}"))
+            
+            combined.sort(key=lambda x: x[0])
+            history_lines = [item[1] for item in combined[-20:]]  # analisa as últimas 20 mensagens
+            
+            if not history_lines:
+                return
+
+            loop = asyncio.get_running_loop()
+            extracted_facts = await loop.run_in_executor(
+                None,
+                lambda: reflect_on_conversation(history_lines)
+            )
+
+            if extracted_facts:
+                for fact in extracted_facts:
+                    print(f"[Orquestrador/Reflexão] Nova memória extraída e salva: '{fact}'")
+                    memory_manager.add_memory(
+                        text=fact,
+                        metadata={"source": "reflexao_conversacao", "size_history": len(history_lines)}
+                    )
+        except Exception as e:
+            print(f"[Orquestrador/Reflexão] Erro ao executar tarefa de reflexão: {e}")
+

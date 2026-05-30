@@ -636,6 +636,7 @@
             <button class="tab-link" onclick="switchTab('controles')">⚙️ Controles</button>
             <button class="tab-link" onclick="switchTab('persona')">🧠 Persona</button>
             <button class="tab-link" onclick="switchTab('voz')">🔊 Ajustes de Voz</button>
+            <button class="tab-link" onclick="switchTab('memoria')">💾 Memória</button>
         </nav>
 
         <!-- Container de Status Geral -->
@@ -837,6 +838,38 @@
                     </div>
                 </div>
             </div>
+
+            <!-- ABA MEMÓRIA -->
+            <div id="tab-memoria" class="tab-pane hidden">
+                <div class="controls-wrapper" style="grid-template-columns: 1fr;">
+                    <!-- Adicionar Memória Manual -->
+                    <div class="control-group-card">
+                        <h3>Adicionar Nova Memória / Fato Manual</h3>
+                        <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 15px;">
+                            Insira fatos permanentes sobre o grupo, preferências ou conhecimentos sobre os membros. Isso ajudará a orientar a persona e contextualizar as respostas da IA.
+                        </p>
+                        <div class="tts-test-input-row" style="margin-bottom: 0;">
+                            <input type="text" id="memoryManualInput" class="input-control" placeholder="Ex: O Pedro é desenvolvedor e gosta de programar de madrugada..."/>
+                            <button class="btn btn-primary" onclick="addManualMemory()" style="width: auto; padding: 0 25px;">Gravar Memória</button>
+                        </div>
+                    </div>
+
+                    <!-- Listagem das Memórias -->
+                    <div class="control-group-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3 style="margin: 0;">Banco de Memórias Ativas</h3>
+                            <button class="btn btn-danger" onclick="clearAllMemories()" style="width: auto; padding: 5px 15px; font-size: 0.85rem;">Limpar Banco de Memórias</button>
+                        </div>
+                        <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 15px;">
+                            Estas são as memórias armazenadas de longo prazo. Elas são buscadas dinamicamente a cada nova conversa.
+                        </p>
+                        <div id="memoriesListContainer" style="max-height: 400px; overflow-y: auto;">
+                            <!-- Memórias injetadas via JS -->
+                            <p style="text-align: center; color: var(--text-muted); padding: 20px 0;">Carregando memórias...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -889,6 +922,8 @@
 
             if (tabId === 'persona') {
                 loadConfigForm();
+            } else if (tabId === 'memoria') {
+                loadMemories();
             }
         }
 
@@ -1134,6 +1169,109 @@
                 player.play();
             } else {
                 addSystemLog("Erro: " + data.message);
+            }
+        }
+
+        // 7. Funções de Memória
+        async function loadMemories() {
+            try {
+                const resp = await fetch("/api/memories");
+                const data = await resp.json();
+                const container = document.getElementById("memoriesListContainer");
+                
+                if (data.success && data.memories) {
+                    if (data.memories.length === 0) {
+                        container.innerHTML = `<p style="text-align: center; color: var(--text-muted); padding: 20px 0;">Nenhuma memória gravada ainda.</p>`;
+                        return;
+                    }
+                    
+                    let html = '<div style="display: flex; flex-direction: column; gap: 10px;">';
+                    data.memories.forEach(mem => {
+                        const date = new Date(mem.metadata.timestamp * 1000).toLocaleString();
+                        const source = mem.metadata.source || "desconhecida";
+                        const displaySource = source === "reflexao_conversacao" ? "🤖 Reflexão Automática" : "👤 Manual";
+                        
+                        html += `
+                            <div class="memory-item-card" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+                                <div style="flex: 1;">
+                                    <p style="margin: 0 0 5px 0; color: #fff; font-size: 0.95rem;">${mem.text}</p>
+                                    <span style="font-size: 0.75rem; color: var(--text-muted);">${date} | Fonte: ${displaySource}</span>
+                                </div>
+                                <button class="btn btn-danger" onclick="deleteMemory('${mem.id}')" style="width: auto; padding: 5px 12px; font-size: 0.8rem;">Apagar</button>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = `<p style="text-align: center; color: #ff5555; padding: 20px 0;">Erro ao carregar memórias do servidor.</p>`;
+                }
+            } catch (e) {
+                console.error(e);
+                document.getElementById("memoriesListContainer").innerHTML = `<p style="text-align: center; color: #ff5555; padding: 20px 0;">Falha na requisição de memórias.</p>`;
+            }
+        }
+
+        async function addManualMemory() {
+            const input = document.getElementById("memoryManualInput");
+            const text = input.value.trim();
+            if (!text) return;
+            
+            addSystemLog("Gravando nova memória manual...");
+            try {
+                const resp = await fetch("/api/memories/add", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    addSystemLog("Memória manual gravada!");
+                    input.value = "";
+                    loadMemories();
+                } else {
+                    addSystemLog("Erro: " + data.message);
+                }
+            } catch (e) {
+                addSystemLog("Erro de conexão ao gravar memória.");
+            }
+        }
+
+        async function deleteMemory(id) {
+            if (!confirm("Deseja realmente apagar esta memória?")) return;
+            addSystemLog(`Apagando memória ${id}...`);
+            try {
+                const resp = await fetch("/api/memories/delete", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    addSystemLog("Memória deletada.");
+                    loadMemories();
+                } else {
+                    addSystemLog("Erro: " + data.message);
+                }
+            } catch (e) {
+                addSystemLog("Erro de conexão ao deletar memória.");
+            }
+        }
+
+        async function clearAllMemories() {
+            if (!confirm("ATENÇÃO: Deseja apagar ABSOLUTAMENTE TODAS as memórias do bot? Esta ação não pode ser desfeita.")) return;
+            addSystemLog("Limpando todo o banco de memórias...");
+            try {
+                const resp = await fetch("/api/memories/clear", { method: 'POST' });
+                const data = await resp.json();
+                if (data.success) {
+                    addSystemLog("Banco de memórias totalmente limpo.");
+                    loadMemories();
+                } else {
+                    addSystemLog("Erro: " + data.message);
+                }
+            } catch (e) {
+                addSystemLog("Erro de conexão ao limpar memórias.");
             }
         }
     </script>

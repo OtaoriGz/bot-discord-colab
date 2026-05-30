@@ -329,6 +329,52 @@ async def voice_test(text: str = Form(...)):
     except Exception as e:
         return {"success": False, "message": f"Erro no teste de voz: {str(e)}"}
 
+@app.get("/api/memories")
+def get_memories():
+    try:
+        from .memory import memory_manager
+        mems = memory_manager.get_all_memories()
+        return {"success": True, "memories": mems}
+    except Exception as e:
+        return {"success": False, "message": f"Erro ao obter memórias: {str(e)}"}
+
+@app.post("/api/memories/add")
+async def add_memory(data: dict):
+    try:
+        from .memory import memory_manager
+        text = data.get("text")
+        if not text or text.strip() == "":
+            return {"success": False, "message": "Texto de memória vazio."}
+            
+        mem_id = memory_manager.add_memory(text, metadata={"source": "manual_panel"})
+        return {"success": True, "message": "Memória adicionada com sucesso!", "id": mem_id}
+    except Exception as e:
+        return {"success": False, "message": f"Erro ao adicionar memória: {str(e)}"}
+
+@app.post("/api/memories/delete")
+async def delete_memory(data: dict):
+    try:
+        from .memory import memory_manager
+        mem_id = data.get("id")
+        if not mem_id:
+            return {"success": False, "message": "ID da memória não informado."}
+            
+        success = memory_manager.delete_memory(mem_id)
+        if success:
+            return {"success": True, "message": "Memória deletada com sucesso!"}
+        return {"success": False, "message": "Memória não encontrada."}
+    except Exception as e:
+        return {"success": False, "message": f"Erro ao deletar memória: {str(e)}"}
+
+@app.post("/api/memories/clear")
+async def clear_memories():
+    try:
+        from .memory import memory_manager
+        memory_manager.clear_memories()
+        return {"success": True, "message": "Todas as memórias foram removidas!"}
+    except Exception as e:
+        return {"success": False, "message": f"Erro ao limpar banco de memórias: {str(e)}"}
+
 def start_web_server(discord_bot):
     global bot_instance, public_url
     bot_instance = discord_bot
